@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { CaixaFareja, Logo, LogoLink, Pata, Trilha } from "@/components/brand";
+import { GatoFareja, Logo, LogoLink, Pata, Trilha } from "@/components/brand";
 import { depoimentos, faq, planos, site } from "@/lib/config";
 import { suplementos } from "@/lib/diagnostico";
 import { linkWhatsApp } from "@/lib/whatsapp";
@@ -55,7 +56,7 @@ export default function Home() {
       <header className="sticky top-0 z-30 border-b-2 border-linha bg-areia">
         <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-4 px-5 py-3.5 lg:px-14">
           <div className="flex items-baseline gap-2.5">
-            <LogoLink className="text-[30px] lg:text-[34px]" />
+            <LogoLink className="text-[28px] sm:text-[30px] lg:text-[34px]" />
             <span className="hidden text-[10px] font-bold tracking-[0.26em] text-coleira sm:inline">BOX FUNCIONAL</span>
           </div>
 
@@ -67,13 +68,13 @@ export default function Home() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Link href="/app" className="px-2 py-2 text-[15px] font-bold text-coleira hover:text-coleira-escuro">
+          <div className="flex items-center gap-1 sm:gap-4">
+            <Link href="/app" className="hidden px-2 py-2 text-[15px] min-[360px]:block font-bold text-coleira hover:text-coleira-escuro">
               Entrar
             </Link>
             <Link
               href="/quiz"
-              className="flex h-11 items-center rounded-full bg-faro px-5 font-display text-base font-bold text-areia hover:bg-faro-escuro sm:h-12 sm:px-6 sm:text-[17px]"
+              className="flex h-11 items-center rounded-full bg-faro px-4 font-display text-[15px] font-bold whitespace-nowrap text-areia hover:bg-faro-escuro sm:h-12 sm:px-6 sm:text-[17px]"
             >
               Montar meu box
             </Link>
@@ -81,7 +82,7 @@ export default function Home() {
         </div>
         <nav
           aria-label="Seções"
-          className="flex gap-5 overflow-x-auto border-t-2 border-linha px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-coleira lg:hidden"
+          className="flex justify-between gap-3 overflow-x-auto border-t-2 border-linha px-5 py-2.5 text-[13px] font-semibold whitespace-nowrap text-coleira [scrollbar-width:none] sm:justify-start sm:gap-6 sm:text-sm lg:hidden [&::-webkit-scrollbar]:hidden"
         >
           {navegacao.map((item) => (
             <a key={item.href} href={item.href}>
@@ -117,7 +118,15 @@ export default function Home() {
               <Trilha className="mt-2 hidden h-[52px] w-[380px] lg:block" />
             </div>
             <div className="flex items-center justify-center lg:flex-[0.85]">
-              <CaixaFareja className="w-[280px] sm:w-[380px]" />
+              <Image
+                src="/caixa-fareja.webp"
+                alt="Caixa FAREJA laranja, com a lista do que vem dentro impressa na lateral"
+                width={1100}
+                height={751}
+                priority
+                sizes="(min-width: 1024px) 520px, 90vw"
+                className="w-full max-w-[520px] drop-shadow-[0_22px_28px_rgba(42,30,23,0.35)]"
+              />
             </div>
           </div>
         </section>
@@ -354,21 +363,40 @@ export default function Home() {
         </section>
 
         <section id="gatos" className="mx-auto max-w-[1280px] px-5 py-16 lg:px-14">
-          <div className="flex flex-col items-start gap-4 rounded-[22px] border-2 border-linha bg-petisco-suave p-8 sm:p-11">
-            <Etiqueta className="text-coleira">Para gatos</Etiqueta>
-            <h2 className="font-display text-[30px] leading-tight font-extrabold sm:text-[36px]">
-              Gato também fareja. E como.
-            </h2>
-            <p className="max-w-[620px] text-base leading-relaxed text-casca">
-              Na avaliação você escolhe gato e o diagnóstico muda junto: porções menores, texturas que felino aceita e o
-              suplemento escolhido pela queixa dele, da pelagem ao estresse.
-            </p>
-            <Link
-              href="/quiz"
-              className="flex h-[52px] items-center rounded-full bg-coleira px-7 font-display text-[17px] font-extrabold text-areia hover:bg-coleira-escuro"
+          <div className="relative overflow-hidden rounded-[22px] bg-petisco">
+            <Pata size={64} className="absolute top-7 right-[38%] hidden rotate-[14deg] text-focinho opacity-[0.08] sm:block" />
+            <Pata size={46} className="absolute bottom-8 left-[46%] hidden -rotate-[18deg] text-focinho opacity-[0.08] lg:block" />
+            <svg
+              viewBox="0 0 300 60"
+              fill="none"
+              aria-hidden="true"
+              className="absolute right-[250px] bottom-6 hidden w-[300px] lg:block"
             >
-              Avaliar meu gato
-            </Link>
+              <path
+                d="M6 44 C 60 44, 56 14, 110 14 C 164 14, 156 42, 210 38 C 250 35, 262 22, 294 24"
+                stroke="#0E7C7B"
+                strokeWidth="4.5"
+                strokeLinecap="round"
+                strokeDasharray="1 13"
+              />
+            </svg>
+            <GatoFareja className="absolute right-3 -bottom-1 w-[150px] sm:right-8 sm:w-[230px] lg:right-14 lg:w-[290px]" />
+            <div className="relative flex flex-col items-start gap-4 p-8 pb-44 sm:p-11 sm:pr-[280px] lg:pr-[380px]">
+              <Etiqueta className="text-coleira-escuro">Para gatos</Etiqueta>
+              <h2 className="font-display text-[30px] leading-tight font-extrabold sm:text-[36px]">
+                Gato também fareja. E como.
+              </h2>
+              <p className="max-w-[620px] text-base leading-relaxed text-[#5c4a1e]">
+                Na avaliação você escolhe gato e o diagnóstico muda junto: porções menores, texturas que felino aceita e
+                o suplemento escolhido pela queixa dele, da pelagem ao estresse.
+              </p>
+              <Link
+                href="/quiz"
+                className="flex h-[52px] items-center rounded-full bg-coleira px-7 font-display text-[17px] font-extrabold text-areia hover:bg-coleira-escuro"
+              >
+                Avaliar meu gato
+              </Link>
+            </div>
           </div>
         </section>
 

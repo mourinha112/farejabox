@@ -55,95 +55,6 @@ export function Trilha({ className = "", cor = "#FFC93C" }: { className?: string
   );
 }
 
-export function CaixaFareja({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 380 380" fill="none" className={className} role="img" aria-label="Caixa FAREJA com a tampa amarela">
-      <ellipse cx="180" cy="338" rx="128" ry="22" fill="#2A1E17" opacity="0.22" />
-      <polygon points="85,155 180,210 180,332 85,277" fill="#E2551F" />
-      <polygon points="275,155 180,210 180,332 275,277" fill="#BE3F16" />
-      <g transform="matrix(0.866,0.5,0,1,85,155)">
-        <text
-          x="55"
-          y="76"
-          textAnchor="middle"
-          fontFamily="var(--font-baloo), 'Arial Rounded MT Bold', Arial, sans-serif"
-          fontWeight="800"
-          fontSize="27"
-          fill="#FFF4E4"
-        >
-          FAREJA
-        </text>
-        <text
-          x="55"
-          y="98"
-          textAnchor="middle"
-          fontFamily="var(--font-archivo), Arial, sans-serif"
-          fontWeight="700"
-          fontSize="8.5"
-          letterSpacing="2.2"
-          fill="#FFD9C6"
-        >
-          BOX FUNCIONAL
-        </text>
-      </g>
-      <g transform="matrix(0.866,-0.5,0,1,180,210)">
-        <path
-          d="M14 82 C 34 82, 30 58, 50 58 C 68 58, 64 76, 82 72"
-          stroke="#FFC93C"
-          strokeWidth="4.5"
-          strokeLinecap="round"
-          strokeDasharray="1 11"
-        />
-        <g transform="translate(78 34)" fill="#FFC93C">
-          <circle cx="5" cy="11" r="3.6" />
-          <circle cx="13" cy="6" r="3.6" />
-          <circle cx="21" cy="6" r="3.6" />
-          <circle cx="29" cy="11" r="3.6" />
-          <ellipse cx="17" cy="18" rx="8" ry="6" />
-        </g>
-      </g>
-      <polygon points="287,130 180,192 180,212 287,150" fill="#EAB62A" />
-      <polygon points="73,130 180,192 180,212 73,150" fill="#F2BF2E" />
-      <polygon points="180,68 287,130 180,192 73,130" fill="#FFC93C" />
-      <g transform="matrix(0.866,0.5,-0.866,0.5,180,68)">
-        <g transform="translate(28 28)" fill="#B8860B" opacity="0.55">
-          <circle cx="6" cy="13" r="4.4" />
-          <circle cx="16" cy="6" r="4.4" />
-          <circle cx="26" cy="6" r="4.4" />
-          <circle cx="36" cy="13" r="4.4" />
-          <ellipse cx="21" cy="21" rx="10" ry="7" />
-        </g>
-      </g>
-      <path d="M120 46 L 128 30 M150 34 L 152 16 M96 70 L 80 60" stroke="#FFC93C" strokeWidth="5" strokeLinecap="round" />
-      <g transform="rotate(8 312 86)">
-        <circle cx="312" cy="86" r="37" fill="#FFF4E4" />
-        <text
-          x="312"
-          y="82"
-          textAnchor="middle"
-          fontFamily="var(--font-baloo), 'Arial Rounded MT Bold', Arial, sans-serif"
-          fontWeight="800"
-          fontSize="13.5"
-          fill="#D9480F"
-        >
-          tem
-        </text>
-        <text
-          x="312"
-          y="98"
-          textAnchor="middle"
-          fontFamily="var(--font-baloo), 'Arial Rounded MT Bold', Arial, sans-serif"
-          fontWeight="800"
-          fontSize="13.5"
-          fill="#D9480F"
-        >
-          surpresa!
-        </text>
-      </g>
-    </svg>
-  );
-}
-
 export function IconeWhatsApp({ size = 22, className = "" }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 22 22" fill="none" className={className} aria-hidden="true">
@@ -157,6 +68,40 @@ export function IconeWhatsApp({ size = 22, className = "" }: { size?: number; cl
         d="M7.5 8.5 C 7.5 13, 9 14.5, 13.5 14.5 L 14.5 12.5 L 12.5 11.5 L 11.5 12 C 10.5 11.5, 10.5 11.5, 10 10.5 L 10.5 9.5 L 9.5 7.5 Z"
         fill="currentColor"
       />
+    </svg>
+  );
+}
+
+export function GatoFareja({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 320 340" fill="none" className={className} aria-hidden="true">
+      <path d="M226 306 C 296 306, 306 226, 262 204" stroke="#0A5958" strokeWidth="24" strokeLinecap="round" />
+      <path d="M90 340 C 78 250, 108 186, 160 186 C 212 186, 242 250, 230 340 Z" fill="#0E7C7B" />
+      <ellipse cx="160" cy="268" rx="34" ry="52" fill="#9FD9CF" opacity="0.55" />
+      <polygon points="88,104 96,22 156,78" fill="#0E7C7B" />
+      <polygon points="232,104 224,22 164,78" fill="#0E7C7B" />
+      <polygon points="104,84 108,48 136,76" fill="#FFD9C6" />
+      <polygon points="216,84 212,48 184,76" fill="#FFD9C6" />
+      <ellipse cx="160" cy="130" rx="80" ry="68" fill="#0E7C7B" />
+      <ellipse cx="128" cy="124" rx="15" ry="17" fill="#FFC93C" />
+      <ellipse cx="192" cy="124" rx="15" ry="17" fill="#FFC93C" />
+      <ellipse cx="128" cy="124" rx="4.5" ry="13" fill="#2A1E17" />
+      <ellipse cx="192" cy="124" rx="4.5" ry="13" fill="#2A1E17" />
+      <path d="M151 150 L 169 150 L 160 161 Z" fill="#F4622F" />
+      <path
+        d="M160 161 L 160 168 M160 168 Q 150 178 141 170 M160 168 Q 170 178 179 170"
+        stroke="#FFF4E4"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M112 156 L 62 148 M112 166 L 64 174 M208 156 L 258 148 M208 166 L 256 174"
+        stroke="#FFF4E4"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <ellipse cx="132" cy="332" rx="24" ry="13" fill="#0A5958" />
+      <ellipse cx="188" cy="332" rx="24" ry="13" fill="#0A5958" />
     </svg>
   );
 }
