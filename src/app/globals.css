@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-faro: #f4622f;
+  --color-faro-escuro: #c74a1d;
+  --color-faro-texto: #c2410c;
+  --color-faro-claro: #ffd9c6;
+  --color-faro-suave: #ffe3d4;
+  --color-petisco: #ffc93c;
+  --color-petisco-suave: #fff9ec;
+  --color-mel: #8a6210;
+  --color-coleira: #0e7c7b;
+  --color-coleira-escuro: #0a5958;
+  --color-menta: #9fd9cf;
+  --color-menta-suave: #e9f4f0;
+  --color-areia: #fff4e4;
+  --color-focinho: #2a1e17;
+  --color-casca: #6b5647;
+  --color-palha: #8c7558;
+  --color-linha: #f0e2cc;
+  --color-linha-forte: #e0cdaf;
+
+  --font-display: var(--font-baloo), "Arial Rounded MT Bold", Arial, sans-serif;
+  --font-sans: var(--font-archivo), Arial, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+}
+
+body {
+  background: var(--color-areia);
+  color: var(--color-focinho);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-coleira);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.fundo-escuro :focus-visible {
+  outline-color: var(--color-petisco);
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.entrada {
+  animation: subir 0.28s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .entrada {
+    animation: none;
+  }
+}
+
+@media print {
+  .nao-imprimir {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .folha {
+    break-after: page;
+    box-shadow: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+  .folha:last-child {
+    break-after: auto;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
