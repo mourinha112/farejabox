@@ -3,8 +3,8 @@ import "server-only";
 // Funil do quiz no Upstash Redis (REST). As variáveis são injetadas pela Vercel
 // quando o banco é conectado ao projeto na aba Storage.
 
-const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
-const token = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
 export const bancoConfigurado = Boolean(url && token);
 

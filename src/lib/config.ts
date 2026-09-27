@@ -1,12 +1,24 @@
 // Tudo que muda sem mexer em tela fica aqui.
 // O número do WhatsApp vem de NEXT_PUBLIC_WHATSAPP_NUMBER (só dígitos, com DDI: 5521999999999).
 
+// Aceita variável vazia, sem protocolo ou inválida sem derrubar o build.
+function urlDoSite(): string {
+  const candidatas = [process.env.NEXT_PUBLIC_SITE_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL];
+  for (const candidata of candidatas) {
+    const valor = candidata?.trim();
+    if (!valor) continue;
+    const completa = /^https?:\/\//i.test(valor) ? valor : `https://${valor}`;
+    if (URL.canParse(completa)) return completa.replace(/\/+$/, "");
+  }
+  return "https://farejabox.com.br";
+}
+
 export const site = {
   nome: "FAREJA",
   assinatura: "Box funcional do pet",
   slogan: "farejou, achou, amou.",
   dominio: "farejabox.com.br",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://farejabox.com.br",
+  url: urlDoSite(),
   whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, ""),
   instagram: "farejabox",
   freteGratisAcima: 149,
