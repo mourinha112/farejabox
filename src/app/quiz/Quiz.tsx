@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { IconeWhatsApp, LogoLink, Pata } from "@/components/brand";
 import { curadoria, planos, site, type PlanoId } from "@/lib/config";
@@ -23,7 +24,8 @@ import {
 } from "@/lib/diagnostico";
 import { avisarInicio, avisarInteresse, avisarPrevia } from "@/lib/funil";
 import { atualizarCadastro, linkDeAcesso, salvarDados } from "@/lib/storage";
-import { linkWhatsApp, mascaraWhatsApp, mensagemPedido, mensagemResultado, whatsappValido } from "@/lib/whatsapp";
+import { salvarPerfilCheckout } from "@/lib/checkout-storage";
+import { linkWhatsApp, mascaraWhatsApp, mensagemResultado, whatsappValido } from "@/lib/whatsapp";
 
 type Rascunho = Partial<Respostas>;
 type Tela = "perguntas" | "previa" | "contato";
@@ -195,6 +197,7 @@ function Opcoes<T extends string>({
 }
 
 export default function Quiz({ planoInicial }: { planoInicial?: PlanoId }) {
+  const router = useRouter();
   const [tela, setTela] = useState<Tela>("perguntas");
   const [etapa, setEtapa] = useState(1);
   const [r, setR] = useState<Rascunho>({ especie: "cachorro", nomePet: "", tutor: "", whatsapp: "" });
@@ -263,6 +266,14 @@ export default function Quiz({ planoInicial }: { planoInicial?: PlanoId }) {
     window.scrollTo({ top: 0 });
   }
 
+  function abrirCheckout() {
+    if (!salvarPerfilCheckout(montarRespostas(r), plano)) {
+      setErro("Não foi possível guardar seu perfil nesta aba. Permita o armazenamento do site e tente novamente.");
+      return;
+    }
+    router.push(`/checkout?plano=${plano}&perfil=novo`);
+  }
+
   function continuar(evento: React.FormEvent) {
     evento.preventDefault();
     const problema = validar();
@@ -285,9 +296,7 @@ export default function Quiz({ planoInicial }: { planoInicial?: PlanoId }) {
     irTela("previa");
   }
 
-  if (final) return intencaoAssinar ? (
-    <Pedido respostas={final.respostas} plano={final.plano} onVoltar={() => { setFinal(null); irTela("previa"); }} />
-  ) : <Resultado respostas={final.respostas} plano={final.plano} />;
+  if (final) return <Resultado respostas={final.respostas} plano={final.plano} />;
   if (tela === "previa") {
     return (
       <Previa
@@ -295,7 +304,8 @@ export default function Quiz({ planoInicial }: { planoInicial?: PlanoId }) {
         plano={plano}
         intencaoAssinar={intencaoAssinar}
         onPlano={setPlano}
-        onContinuar={() => irTela("contato")}
+        erro={erro}
+        onContinuar={() => intencaoAssinar ? abrirCheckout() : irTela("contato")}
         onVoltar={() => irPara(ETAPAS)}
       />
     );
@@ -320,7 +330,7 @@ export default function Quiz({ planoInicial }: { planoInicial?: PlanoId }) {
           <div className="rounded-[14px] bg-coleira px-4 py-3 text-areia">
             <p className="text-[11px] font-bold tracking-wider text-menta">SUA ASSINATURA</p>
             <p className="mt-1 font-display text-lg font-bold">{planos[plano].nome} · {precoPlano(plano)}</p>
-            <p className="mt-1 text-xs text-[#dff2ed]">Perfil do pet → revisão do box → contato → WhatsApp</p>
+            <p className="mt-1 text-xs text-[#dff2ed]">Perfil do pet → seu box → entrega e pedido</p>
           </div>
         )}
       </div>
@@ -334,7 +344,7 @@ export default function Quiz({ planoInicial }: { planoInicial?: PlanoId }) {
               </h1>
               <p className="text-[14.5px] text-casca">
                 {intencaoAssinar
-                  ? "Personalize seu box em 4 etapas. Depois, revise a sugestão e continue a assinatura pelo WhatsApp."
+                  ? "Personalize seu box em 4 etapas. Depois, confira a sugestão e conclua seu pedido aqui no site."
                   : "Conte sobre seu pet em 4 etapas e veja uma prévia personalizada. Seu nome e WhatsApp ficam para depois, se quiser continuar."}
               </p>
             </div>
@@ -544,14 +554,10 @@ export default function Quiz({ planoInicial }: { planoInicial?: PlanoId }) {
           <>
             <div className="flex flex-col gap-1.5">
               <h1 className="font-display text-[28px] leading-[1.12] font-extrabold">
-                {intencaoAssinar
-                  ? `Quem vai receber o box de ${nome}?`
-                  : `Quer o cupom e o acompanhamento de ${nome}?`}
+                {`Quer acompanhar o perfil de ${nome}?`}
               </h1>
               <p className="text-sm leading-normal text-casca">
-                {intencaoAssinar
-                  ? "Estes dados identificam seu pedido. Na próxima tela, você abre a conversa para combinar seleção, entrega e pagamento."
-                  : "Seu perfil já está aqui. Deixe o contato para acessar o app e conversar com a FAREJA sobre o cupom e o acompanhamento."}
+                Seu perfil já está aqui. Deixe o contato para salvar o acesso ao app e acompanhar a rotina do seu pet.
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -595,7 +601,7 @@ export default function Quiz({ planoInicial }: { planoInicial?: PlanoId }) {
                 <path d="M10 2 L 12 7 L 17.5 7.5 L 13.4 11 L 14.7 16.5 L 10 13.6 L 5.3 16.5 L 6.6 11 L 2.5 7.5 L 8 7 Z" fill="#0E7C7B" />
               </svg>
               <p className="text-[12.5px] leading-normal text-[#14544f]">
-                Cupom <strong>{site.cupom.codigo}</strong>: {site.cupom.beneficio}. Consulte as condições no atendimento.
+                Seu <strong>perfil e plano de 7 dias são gratuitos</strong>. Acesse o app para começar a acompanhar a rotina.
               </p>
             </div>
           </>
@@ -624,9 +630,7 @@ export default function Quiz({ planoInicial }: { planoInicial?: PlanoId }) {
             className="flex min-h-[58px] flex-1 items-center justify-center gap-2.5 rounded-full bg-faro px-3 py-3 font-display text-[19px] leading-snug font-extrabold text-areia hover:bg-faro-escuro"
           >
             {tela === "contato"
-              ? intencaoAssinar
-                ? "Preparar pedido"
-                : "Acessar meu perfil e cupom"
+              ? "Salvar meu perfil e acessar o app"
               : etapa === ETAPAS
                 ? `Ver o perfil de ${nome}`
                 : "Continuar"}
@@ -660,6 +664,7 @@ function Previa({
   plano,
   intencaoAssinar,
   onPlano,
+  erro,
   onContinuar,
   onVoltar,
 }: {
@@ -667,6 +672,7 @@ function Previa({
   plano: PlanoId;
   intencaoAssinar: boolean;
   onPlano: (plano: PlanoId) => void;
+  erro: string;
   onContinuar: () => void;
   onVoltar: () => void;
 }) {
@@ -696,7 +702,7 @@ function Previa({
           </h1>
           <p className="text-sm text-casca">
             {intencaoAssinar
-              ? "Confira o perfil, a sugestão de conteúdo e o plano. Depois, continue pelo WhatsApp."
+              ? "Confira o perfil, a sugestão de conteúdo e o plano. Depois, só faltam seus dados e a entrega."
               : "Esta prévia é sua, sem precisar deixar contato. Veja como suas respostas orientam a sugestão do box."}
           </p>
         </div>
@@ -739,15 +745,16 @@ function Previa({
       </div>
 
       <div className="sticky bottom-0 flex flex-col gap-2.5 bg-areia px-6 pt-3 pb-[26px]">
+        {erro && <p role="alert" className="text-center text-sm font-bold text-[#b3261e]">{erro}</p>}
         <button
           type="button"
           onClick={onContinuar}
           className="flex min-h-[58px] items-center justify-center rounded-full bg-faro px-4 py-3 text-center font-display text-[18px] font-extrabold text-areia hover:bg-faro-escuro"
         >
-          {intencaoAssinar ? "Continuar com este plano" : "Quero meu cupom e acesso ao app"}
+          {intencaoAssinar ? "Ir para o checkout" : "Salvar meu perfil e acessar o app"}
         </button>
         <p className="text-center text-xs text-casca">
-          {intencaoAssinar ? "Próximo passo: seus dados de contato. Nenhuma cobrança agora." : "No próximo passo, pedimos seu nome e WhatsApp."}
+          {intencaoAssinar ? "Contato e entrega em uma tela. Sem repetir o perfil." : "No próximo passo, pedimos seu nome e WhatsApp."}
         </p>
         <button type="button" onClick={onVoltar} className="text-center text-[13px] font-bold text-coleira underline">
           Ajustar as respostas
@@ -775,46 +782,7 @@ function EscolhaPlano({ plano, onPlano }: { plano: PlanoId; onPlano: (plano: Pla
         valor={plano}
         aoEscolher={onPlano}
       />
-      <p className="text-xs leading-relaxed text-casca">Entrega e eventual frete são confirmados no atendimento. A assinatura é concluída pelo WhatsApp.</p>
-    </div>
-  );
-}
-
-function Pedido({ respostas, plano, onVoltar }: { respostas: Respostas; plano: PlanoId; onVoltar: () => void }) {
-  const d = diagnosticar(respostas);
-  const linkApp = linkDeAcesso(window.location.origin, { v: 1, respostas, planoInteresse: plano });
-  const titulo = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { titulo.current?.focus(); }, []);
-
-  return (
-    <div className="entrada flex min-h-dvh flex-col bg-areia px-6 py-6">
-      <LogoLink className="text-[22px]" />
-      <p className="mt-8 text-xs font-bold tracking-wider text-coleira">PEDIDO PREPARADO</p>
-      <h1 ref={titulo} tabIndex={-1} className="mt-2 font-display text-[30px] leading-tight font-extrabold outline-none">Falta conversar com a FAREJA.</h1>
-      <p className="mt-3 text-sm leading-relaxed text-casca">Abra o WhatsApp e envie a mensagem com o perfil de {respostas.nomePet} e o plano escolhido. A equipe valida a seleção e combina entrega e pagamento com você.</p>
-      <div className="my-6 rounded-[18px] border-2 border-linha bg-white p-5">
-        <h2 className="font-display text-xl font-bold">{planos[plano].nome}</h2>
-        <p className="mt-2 font-display text-2xl font-extrabold text-faro-texto">{precoPlano(plano)}</p>
-        {plano === "trimestral" && <p className="mt-1 text-xs text-casca">Equivale a R${planos[plano].porMes}/mês, com um box por mês.</p>}
-        <dl className="mt-5 space-y-3 text-sm">
-          <div><dt className="font-bold">Pet</dt><dd>{respostas.nomePet} · {d.perfil}</dd></div>
-          <div><dt className="font-bold">Suplemento sugerido</dt><dd>{suplementos[d.suplemento].nome} · sujeito à validação da equipe</dd></div>
-          <div><dt className="font-bold">Seu contato</dt><dd>{respostas.tutor} · {respostas.whatsapp}</dd></div>
-        </dl>
-        <p className="mt-5 border-t border-linha pt-3 text-xs leading-relaxed text-casca">Cupom {site.cupom.codigo}: {site.cupom.beneficio}. Entrega, eventual frete e condições do cupom a confirmar no atendimento.</p>
-      </div>
-      <div className="mt-auto flex flex-col gap-3">
-        {site.whatsapp ? (
-          <a href={linkWhatsApp(mensagemPedido(respostas, plano, linkApp))} target="_blank" rel="noopener noreferrer" onClick={() => avisarInteresse(respostas.whatsapp, plano, "resultado")} className="flex min-h-[58px] items-center justify-center gap-2 rounded-full bg-coleira px-4 py-3 text-center font-display text-lg font-extrabold text-areia hover:bg-coleira-escuro">
-            <IconeWhatsApp size={22} /> Continuar no WhatsApp
-          </a>
-        ) : (
-          <p role="status" className="rounded-[14px] bg-petisco-suave p-4 text-sm text-casca">O atendimento pelo WhatsApp está indisponível no momento. Você pode revisar seu pedido ou acessar o perfil abaixo.</p>
-        )}
-        <p className="text-center text-xs leading-relaxed text-casca">A mensagem só é enviada por você no WhatsApp. Sua assinatura ainda não está confirmada e não houve cobrança.</p>
-        <button type="button" onClick={onVoltar} className="py-2 text-sm font-bold text-coleira underline">Editar plano ou respostas</button>
-        <Link href="/mapa" className="text-center text-sm font-bold text-coleira underline">Ver o perfil de {respostas.nomePet}</Link>
-      </div>
+      <p className="text-xs leading-relaxed text-casca">Frete grátis. Confira seus dados e conclua o pedido aqui no site.</p>
     </div>
   );
 }
@@ -883,29 +851,27 @@ function Resultado({ respostas, plano }: { respostas: Respostas; plano: PlanoId 
           <p className="text-[13px] text-casca">
             {plano === "trimestral" ? (
               <>
-                /mês no plano trimestral <s>R${planos.mensal.preco}</s>
+                /mês no plano trimestral
               </>
             ) : (
               "/mês no plano mensal"
             )}
           </p>
         </div>
-        <p className="text-xs text-casca">{precoPlano(plano)}. Entrega e eventual frete a confirmar pelo WhatsApp.</p>
+        <p className="text-xs text-casca">{precoPlano(plano)}. Frete grátis.</p>
         <p className="text-xs text-casca">
-          Cupom <strong className="text-focinho">{site.cupom.codigo}</strong>: {site.cupom.beneficio}.
+          O perfil, o plano de 7 dias e o acesso ao app continuam gratuitos.
         </p>
       </div>
 
       <div className="relative mt-6 flex flex-col gap-2.5 px-[26px] pb-7">
-        {site.whatsapp && <a
-          href={linkWhatsApp(mensagemPedido(respostas, plano, linkApp))}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href={`/checkout?plano=${plano}`}
           onClick={() => avisarInteresse(respostas.whatsapp, plano, "resultado")}
           className="flex h-[60px] items-center justify-center rounded-full bg-petisco font-display text-xl font-extrabold text-focinho hover:bg-[#ffd560]"
         >
-          Pedir o box pelo WhatsApp
-        </a>}
+          Continuar para o checkout
+        </Link>
         <Link
           href="/mapa"
           className="flex h-[50px] items-center justify-center rounded-full border-2 border-faro-claro text-[15px] font-bold hover:bg-faro-escuro"

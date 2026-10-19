@@ -4,7 +4,7 @@ import Quiz from "../quiz/Quiz";
 
 export const metadata: Metadata = {
   title: "Personalizar minha assinatura",
-  description: "Escolha seu plano, personalize o box pelo perfil do pet e continue a assinatura pelo WhatsApp com a equipe FAREJA.",
+  description: "Escolha seu plano, personalize o box pelo perfil do pet e conclua seu pedido no checkout da FAREJA.",
 };
 
 export default async function PaginaAssinar({ searchParams }: PageProps<"/assinar">) {

@@ -18,7 +18,6 @@ import {
   type PilarId,
   type Pilares,
 } from "@/lib/diagnostico";
-import { avisarInteresse } from "@/lib/funil";
 import {
   atualizarDados,
   decodificarAcesso,
@@ -30,7 +29,7 @@ import {
   type Dados,
   type StatusCaixa,
 } from "@/lib/storage";
-import { linkWhatsApp, mensagemAjuda, mensagemAvaliacao, mensagemPedido } from "@/lib/whatsapp";
+import { linkWhatsApp, mensagemAjuda, mensagemAvaliacao } from "@/lib/whatsapp";
 
 type Aba = "inicio" | "caixas" | "saude" | "perfil";
 
@@ -173,7 +172,6 @@ function CartaoCaixa({ dados }: { dados: Dados }) {
   const [copiado, setCopiado] = useState(false);
 
   if (!assinatura) {
-    const linkApp = linkDeAcesso(window.location.origin, { v: 1, respostas: r, planoInteresse: dados.planoInteresse });
     return (
       <section className="fundo-escuro flex flex-col gap-2.5 rounded-[18px] bg-faro px-5 py-[18px] text-areia">
         <Rotulo className="text-faro-claro">Box de {r.nomePet}</Rotulo>
@@ -181,15 +179,12 @@ function CartaoCaixa({ dados }: { dados: Dados }) {
         <p className="text-[13px] leading-normal text-faro-suave">
           O perfil do pet já indicou o que entra na caixa. Assine e acompanhe a entrega por aqui.
         </p>
-        <a
-          href={linkWhatsApp(mensagemPedido(r, dados.planoInteresse ?? "trimestral", linkApp))}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => avisarInteresse(r.whatsapp, dados.planoInteresse ?? "trimestral", "app")}
+        <Link
+          href={`/checkout?plano=${dados.planoInteresse ?? "mensal"}`}
           className="mt-1 flex h-[46px] items-center justify-center rounded-full bg-areia font-display text-[15px] font-extrabold text-faro-texto"
         >
           Quero o box de {r.nomePet}
-        </a>
+        </Link>
       </section>
     );
   }
@@ -232,7 +227,7 @@ function CartaoCaixa({ dados }: { dados: Dados }) {
       >
         <div className="h-full rounded-full bg-petisco" style={{ width: `${etapa.progresso}%` }} />
       </div>
-      <ol className="flex justify-between text-[11.5px] text-faro-claro">
+      <ol className="flex flex-wrap justify-between gap-x-2 gap-y-1 text-[11.5px] text-faro-claro">
         {etapasCaixa.map((e) => (
           <li key={e.id} className={e.id === etapa.id ? "font-bold text-areia" : ""}>
             {e.nome}
@@ -322,7 +317,12 @@ function Avaliar({ dados, aoFechar }: { dados: Dados; aoFechar: () => void }) {
   );
 }
 
-function Inicio({ dados, irPara }: { dados: Dados; irPara: (aba: Aba) => void }) {
+function Inicio({ dados, irPara, somenteLeitura = false, diaAtual = hoje() }: {
+  dados: Dados;
+  irPara?: (aba: Aba) => void;
+  somenteLeitura?: boolean;
+  diaAtual?: string;
+}) {
   const [avaliando, setAvaliando] = useState(false);
   const r = dados.respostas;
   const { base, atual } = pilaresAtuais(dados);
@@ -331,9 +331,10 @@ function Inicio({ dados, irPara }: { dados: Dados; irPara: (aba: Aba) => void })
   const d = diagnosticar(r);
   const focoPilar = suplementos[d.suplemento].pilar;
   const segundo = ordemPilares.filter((id) => id !== focoPilar).reduce((m, id) => (atual[id] < atual[m] ? id : m));
-  const doseFeita = dados.doses.includes(hoje());
+  const doseFeita = dados.doses.includes(diaAtual);
 
   function marcarDose() {
+    if (somenteLeitura) return;
     atualizarDados((a) => ({
       ...a,
       doses: doseFeita ? a.doses.filter((dia) => dia !== hoje()) : [...a.doses, hoje()],
@@ -362,7 +363,7 @@ function Inicio({ dados, irPara }: { dados: Dados; irPara: (aba: Aba) => void })
         </p>
         <button
           type="button"
-          onClick={() => irPara("saude")}
+          onClick={irPara ? () => irPara("saude") : undefined}
           className="h-11 rounded-full border-2 border-coleira font-display text-[15px] font-bold text-coleira"
         >
           Fazer check-in da semana
@@ -372,7 +373,7 @@ function Inicio({ dados, irPara }: { dados: Dados; irPara: (aba: Aba) => void })
       {dados.assinatura && (
         <button
           type="button"
-          onClick={marcarDose}
+          onClick={somenteLeitura ? undefined : marcarDose}
           aria-pressed={doseFeita}
           className={`flex h-[56px] items-center justify-center gap-2 rounded-[14px] border-2 font-display text-[15px] font-bold ${
             doseFeita ? "border-coleira bg-menta-suave text-coleira-escuro" : "border-linha bg-white"
@@ -388,13 +389,13 @@ function Inicio({ dados, irPara }: { dados: Dados; irPara: (aba: Aba) => void })
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => setAvaliando(true)}
+            onClick={somenteLeitura ? undefined : () => setAvaliando(true)}
             className="flex min-h-[52px] flex-1 items-center justify-center rounded-[14px] bg-petisco px-2 text-center font-display text-sm leading-tight font-bold text-focinho"
           >
             {r.nomePet} gostou do box?
           </button>
           <a
-            href={linkWhatsApp(mensagemAjuda(r))}
+            href={somenteLeitura ? undefined : linkWhatsApp(mensagemAjuda(r))}
             target="_blank"
             rel="noopener noreferrer"
             className="flex min-h-[52px] flex-1 items-center justify-center rounded-[14px] bg-coleira px-2 text-center font-display text-sm font-bold text-areia"
@@ -768,16 +769,29 @@ export default function AppTutor() {
   if (!carregado) return <Carregando />;
   if (!dados) return <Entrada />;
 
-  const r = dados.respostas;
-
   function irPara(nova: Aba) {
     setAba(nova);
     window.scrollTo({ top: 0 });
   }
 
+  return <TelaAppTutor dados={dados} aba={aba} irPara={irPara} />;
+}
+
+// O app e a prévia usam a mesma tela. A prévia recebe apenas dados demonstrativos
+// e não monta useDados, importação de acesso ou qualquer efeito de persistência.
+function TelaAppTutor({ dados, aba = "inicio", irPara, somenteLeitura = false, diaAtual }: {
+  dados: Dados;
+  aba?: Aba;
+  irPara?: (aba: Aba) => void;
+  somenteLeitura?: boolean;
+  diaAtual?: string;
+}) {
+  const r = dados.respostas;
+  const Conteudo = somenteLeitura ? "div" : "main";
+
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="flex items-center justify-between px-[22px] pt-[22px] pb-3.5">
+    <div className={`flex flex-col ${somenteLeitura ? "h-full overflow-hidden" : "min-h-dvh"}`}>
+      <header className="flex shrink-0 items-center justify-between gap-2 px-[22px] pt-[22px] pb-3.5">
         <div>
           <Logo className="text-[22px]" />
           <p className="text-[13px] text-casca">
@@ -786,24 +800,24 @@ export default function AppTutor() {
         </div>
         <button
           type="button"
-          onClick={() => irPara("perfil")}
+          onClick={irPara ? () => irPara("perfil") : undefined}
           aria-label="Abrir perfil"
-          className="flex size-[46px] items-center justify-center rounded-full bg-coleira font-display text-[19px] font-extrabold text-areia"
+          className="flex size-[46px] shrink-0 items-center justify-center rounded-full bg-coleira font-display text-[19px] font-extrabold text-areia"
         >
           {r.nomePet.charAt(0).toUpperCase()}
         </button>
       </header>
 
-      <main key={aba} className="entrada flex-1 px-[22px] pt-1.5 pb-6">
-        {aba === "inicio" && <Inicio dados={dados} irPara={irPara} />}
+      <Conteudo key={aba} className={`flex-1 px-[22px] pt-1.5 pb-6 ${somenteLeitura ? "min-h-0 overflow-hidden" : "entrada"}`}>
+        {aba === "inicio" && <Inicio dados={dados} irPara={irPara} somenteLeitura={somenteLeitura} diaAtual={diaAtual} />}
         {aba === "caixas" && <Caixas dados={dados} />}
         {aba === "saude" && <Saude dados={dados} />}
         {aba === "perfil" && <Perfil dados={dados} />}
-      </main>
+      </Conteudo>
 
       <nav
         aria-label="App"
-        className="sticky bottom-0 flex items-center justify-around border-t-2 border-linha bg-white px-2.5 pt-2 pb-3"
+        className="sticky bottom-0 flex shrink-0 items-center justify-around border-t-2 border-linha bg-white px-2.5 pt-2 pb-3"
       >
         {abas.map((item) => {
           const ativa = aba === item.id;
@@ -811,9 +825,9 @@ export default function AppTutor() {
             <button
               key={item.id}
               type="button"
-              onClick={() => irPara(item.id)}
+              onClick={irPara ? () => irPara(item.id) : undefined}
               aria-current={ativa ? "page" : undefined}
-              className={`flex min-w-16 flex-col items-center gap-1 rounded-lg px-2 py-1 text-[11px] ${
+              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-1 text-[11px] ${
                 ativa ? "font-bold text-faro-texto" : "font-semibold text-palha"
               }`}
             >
@@ -836,5 +850,69 @@ export default function AppTutor() {
         })}
       </nav>
     </div>
+  );
+}
+
+const diaDemonstracao = "2026-06-14";
+const respostasDemonstracao: Dados["respostas"] = {
+  especie: "cachorro",
+  nomePet: "Thor",
+  porte: "medio",
+  fase: "adulto",
+  foco: "pelagem",
+  frequencia: "as-vezes",
+  alimentacao: "racao",
+  atividade: "media",
+  mastigacao: "moderado",
+  tutor: "Ana",
+  whatsapp: "",
+};
+const pilaresDemonstracao = diagnosticar(respostasDemonstracao).pilares;
+const dadosDemonstracao: Dados = {
+  respostas: respostasDemonstracao,
+  criadoEm: "2026-06-01T12:00:00.000Z",
+  planoInteresse: "mensal",
+  assinatura: {
+    plano: "mensal",
+    status: "transito",
+    mes: "junho",
+    itens: ["Petiscos naturais", "Pelagem & pele", "Brinde surpresa"],
+  },
+  checkins: [{ data: diaDemonstracao, pilares: { ...pilaresDemonstracao, pele: pilaresDemonstracao.pele + 8 } }],
+  doses: [diaDemonstracao],
+  plano7: [true, true, true, false, false, false, false],
+};
+
+export function PreviaAppTutor() {
+  return (
+    <figure className="relative mx-auto flex w-full max-w-[460px] flex-col items-center px-2 pb-2 sm:px-8">
+      <div aria-hidden="true" className="absolute inset-x-0 top-[15%] aspect-square rounded-full bg-menta-suave" />
+      <div className="relative w-full max-w-[354px] rounded-[46px] bg-focinho p-[9px] shadow-[0_28px_60px_-18px_rgba(42,30,23,0.38)] ring-1 ring-focinho/10">
+        <span aria-hidden="true" className="absolute top-[130px] -left-[3px] h-12 w-[3px] rounded-l-full bg-focinho" />
+        <span aria-hidden="true" className="absolute top-[194px] -left-[3px] h-12 w-[3px] rounded-l-full bg-focinho" />
+        <span aria-hidden="true" className="absolute top-[156px] -right-[3px] h-[70px] w-[3px] rounded-r-full bg-focinho" />
+        <div aria-hidden="true" inert className="pointer-events-none overflow-hidden rounded-[37px] bg-areia select-none">
+          <div className="relative flex h-[38px] items-center justify-between px-6 pt-1 text-[11px] font-bold">
+            <span>9:41</span>
+            <span className="absolute top-[9px] left-1/2 h-[20px] w-[88px] -translate-x-1/2 rounded-full bg-focinho" />
+            <svg width="42" height="12" viewBox="0 0 42 12" fill="currentColor">
+              <path d="M0 8h3v4H0zM5 5h3v7H5zM10 2h3v10h-3z" />
+              <rect x="21" y="2" width="17" height="9" rx="2" fill="none" stroke="currentColor" />
+              <rect x="23" y="4" width="13" height="5" rx="1" />
+              <rect x="39" y="5" width="2" height="3" rx="1" />
+            </svg>
+          </div>
+          <div className="h-[655px]">
+            <TelaAppTutor dados={dadosDemonstracao} somenteLeitura diaAtual={diaDemonstracao} />
+          </div>
+          <div className="flex h-[18px] items-center justify-center bg-white">
+            <span className="h-1 w-24 rounded-full bg-focinho" />
+          </div>
+        </div>
+      </div>
+      <figcaption className="relative mt-5 text-center text-xs leading-relaxed text-casca">
+        Tela real do app · perfil demonstrativo do Thor
+      </figcaption>
+    </figure>
   );
 }

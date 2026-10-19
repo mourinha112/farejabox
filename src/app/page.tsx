@@ -4,6 +4,7 @@ import { GatoFareja, Logo, LogoLink, Pata, Trilha } from "@/components/brand";
 import { curadoria, depoimentos, faq, planos, site } from "@/lib/config";
 import { suplementos } from "@/lib/diagnostico";
 import { linkWhatsApp } from "@/lib/whatsapp";
+import { PreviaAppTutor } from "./app/AppTutor";
 
 const navegacao = [
   { href: "#como-funciona", nome: "Como funciona" },
@@ -29,7 +30,7 @@ const passos = [
     numero: "3",
     cor: "bg-petisco text-focinho",
     titulo: "Chega todo mês",
-    texto: "Confirme seu plano, entrega e pagamento pelo WhatsApp. A assinatura leva petiscos e suplemento à sua porta.",
+    texto: "Escolha o plano e conclua seu pedido aqui no site. A assinatura leva petiscos e suplemento à sua porta.",
   },
 ];
 
@@ -212,7 +213,7 @@ export default function Home() {
               Escolha como ele vai farejar
             </h2>
             <p className="max-w-[620px] text-[15px] leading-relaxed text-casca">
-              Escolha seu plano, personalize o box e confirme o pedido pelo WhatsApp. Sem cobrança nesta etapa.
+              Escolha seu plano, personalize o box e conclua seu pedido aqui no site.
             </p>
           </div>
           <div className="grid items-stretch gap-6 lg:grid-cols-3">
@@ -234,7 +235,7 @@ export default function Home() {
                 Assinar mensal
               </Link>
               <p className="text-center text-[12.5px] leading-snug text-[#cfeae4]">
-                4 etapas para personalizar o box. Finalização pelo WhatsApp.
+                Personalize o box e conclua o pedido aqui no site.
               </p>
             </article>
 
@@ -259,7 +260,7 @@ export default function Home() {
                 Assinar trimestral
               </Link>
               <p className="text-center text-[12.5px] leading-snug text-[#5c4a1e]">
-                4 etapas para personalizar o box. Finalização pelo WhatsApp.
+                Personalize o box e conclua o pedido aqui no site.
               </p>
             </article>
 
@@ -301,43 +302,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-white">
+        <section id="app-do-tutor" className="bg-white">
           <div className="mx-auto grid max-w-[1280px] items-center gap-10 px-5 py-16 lg:grid-cols-2 lg:px-14">
-            <div className="flex justify-center">
-              <div className="w-[270px] rounded-[38px] border-[9px] border-focinho bg-areia p-4 shadow-[0_24px_48px_rgba(42,30,23,0.18)]">
-                <div className="flex items-center justify-between">
-                  <Logo className="text-lg" />
-                  <span className="flex size-8 items-center justify-center rounded-full bg-coleira font-display text-sm font-extrabold text-areia">
-                    T
-                  </span>
-                </div>
-                <div className="mt-3 rounded-2xl bg-faro p-3.5 text-areia">
-                  <p className="text-[9px] font-bold tracking-[0.2em] text-faro-claro">PRÓXIMA CAIXA</p>
-                  <p className="mt-1 font-display text-lg font-extrabold">Acompanhe a entrega</p>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-faro-escuro">
-                    <div className="h-full w-[70%] rounded-full bg-petisco" />
-                  </div>
-                </div>
-                <div className="mt-3 rounded-2xl border-2 border-linha bg-white p-3.5">
-                  <p className="text-[9px] font-bold tracking-[0.2em] text-mel">SAÚDE DO PET</p>
-                  {[
-                    { nome: "Pele e pelagem", largura: "w-[58%]", cor: "bg-faro" },
-                    { nome: "Saúde bucal", largura: "w-[66%]", cor: "bg-coleira" },
-                    { nome: "Mobilidade", largura: "w-[80%]", cor: "bg-petisco" },
-                  ].map((barra) => (
-                    <div key={barra.nome} className="mt-2.5">
-                      <p className="text-[11px] font-bold">{barra.nome}</p>
-                      <div className="mt-1 h-2 overflow-hidden rounded-full bg-linha">
-                        <div className={`h-full rounded-full ${barra.largura} ${barra.cor}`} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-3 rounded-xl bg-petisco py-2.5 text-center font-display text-[13px] font-bold">
-                  Check-in da semana
-                </p>
-              </div>
-            </div>
+            <PreviaAppTutor />
             <div className="flex flex-col gap-4">
               <Etiqueta className="text-coleira">App do tutor</Etiqueta>
               <h2 className="font-display text-[32px] leading-tight font-extrabold sm:text-[38px]">

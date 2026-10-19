@@ -22,10 +22,6 @@ export const site = {
   whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, "") || "5521986131173",
   instagram: "farejabox",
   freteGratisAcima: 149,
-  cupom: {
-    codigo: "PRIMEIROFARO",
-    beneficio: "condição especial no primeiro box",
-  },
 } as const;
 
 export const curadoria = {
@@ -44,8 +40,8 @@ export const planos: Record<
   mensal: {
     id: "mensal",
     nome: "Assinatura mensal",
-    preco: 119,
-    porMes: 119,
+    preco: 169,
+    porMes: 169,
     detalhe: "/mês",
     itens: [
       "4 a 6 petiscos naturais desidratados",
@@ -56,12 +52,12 @@ export const planos: Record<
   trimestral: {
     id: "trimestral",
     nome: "Plano trimestral",
-    preco: 297,
-    porMes: 99,
-    detalhe: "3 meses · R$99/mês",
+    preco: 507,
+    porMes: 169,
+    detalhe: "3 caixas · R$169 por caixa",
     itens: [
       "Tudo do plano mensal",
-      "Economia de R$60 no trimestre",
+      "3 caixas, entregues uma por mês",
       "Brinde de boas-vindas no 1º box",
     ],
   },
@@ -74,7 +70,7 @@ export const faq: { pergunta: string; resposta: string }[] = [
   {
     pergunta: "Como o box é montado?",
     resposta:
-      "Você preenche o perfil do pet em 4 etapas, com informações sobre porte, fase de vida, rotina, mastigação e foco de cuidado. O site apresenta uma prévia com a sugestão de suplemento e o motivo da escolha. Depois você escolhe se quer seguir com um pedido pelo WhatsApp.",
+      "Você preenche o perfil do pet em 4 etapas, com informações sobre porte, fase de vida, rotina, mastigação e foco de cuidado. O site apresenta uma prévia com a sugestão de suplemento e o motivo da escolha. Depois você pode concluir seu pedido aqui no site.",
   },
   {
     pergunta: "Quem escolhe e valida o suplemento?",
@@ -89,7 +85,7 @@ export const faq: { pergunta: string; resposta: string }[] = [
   {
     pergunta: "Já quero assinar. Preciso fazer a avaliação?",
     resposta:
-      "Escolha Assinar mensal ou Assinar trimestral para começar com o plano definido. Em seguida, preencha as 4 etapas do perfil necessárias à personalização do box, revise a seleção e continue pelo WhatsApp para combinar a entrega e o pagamento. Não há cobrança no site.",
+      "Escolha seu plano e preencha as 4 etapas do perfil. Depois da prévia, o checkout pede contato e endereço de entrega, sem repetir as perguntas sobre o pet. Você revisa tudo antes de confirmar o pedido. A assinatura só é ativada após a confirmação do pagamento.",
   },
   {
     pergunta: "O que vem dentro da caixa?",

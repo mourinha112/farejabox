@@ -18,8 +18,7 @@ import {
   suplementos,
 } from "@/lib/diagnostico";
 import { avisarInteresse } from "@/lib/funil";
-import { atualizarDados, linkDeAcesso, useDados } from "@/lib/storage";
-import { linkWhatsApp, mensagemPedido } from "@/lib/whatsapp";
+import { atualizarDados, useDados } from "@/lib/storage";
 
 function Rodape({ pagina }: { pagina: number }) {
   return (
@@ -55,7 +54,6 @@ export default function Mapa() {
   const planoPedido = dados.planoInteresse ?? "trimestral";
   const planoEscolhido = planos[planoPedido];
   const data = new Date(dados.criadoEm).toLocaleDateString("pt-BR");
-  const linkApp = linkDeAcesso(window.location.origin, { v: 1, respostas: r, planoInteresse: planoPedido });
 
   function marcarDia(indice: number) {
     atualizarDados((atual) => ({
@@ -243,7 +241,7 @@ export default function Mapa() {
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-bold tracking-[0.22em] text-menta uppercase">Box de {r.nomePet}</p>
             <p className="rounded-full bg-petisco px-3 py-1 text-[11px] font-bold text-focinho">
-              CUPOM {site.cupom.codigo}
+              FEITO PARA ELE
             </p>
           </div>
           <ul className="mt-3 flex flex-col gap-1.5 text-sm text-[#dff2ed]">
@@ -264,18 +262,16 @@ export default function Mapa() {
             {planoPedido === "trimestral"
               ? `R$${planoEscolhido.preco} no total a cada 3 meses. `
               : `Cobrança mensal de R$${planoEscolhido.preco}. `}
-            Eventual frete a confirmar no WhatsApp.
+            Frete grátis.
           </p>
-          <a
-            href={linkWhatsApp(mensagemPedido(r, planoPedido, linkApp))}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href={`/checkout?plano=${planoPedido}`}
             onClick={() => avisarInteresse(r.whatsapp, planoPedido, "mapa")}
             className="nao-imprimir mt-4 flex h-[54px] items-center justify-center rounded-full bg-petisco font-display text-lg font-extrabold text-focinho hover:bg-[#ffd560]"
           >
-            Assinar pelo WhatsApp
-          </a>
-          <p className="mt-2 text-center text-xs text-menta">Envie a mensagem para confirmar seleção e pagamento com a equipe.</p>
+            Continuar para o checkout
+          </Link>
+          <p className="mt-2 text-center text-xs text-menta">Seu perfil já está preenchido. Agora só faltam seus dados e a entrega.</p>
         </div>
 
         <p className="text-[13px] leading-relaxed text-casca">

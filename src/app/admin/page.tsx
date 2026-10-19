@@ -4,6 +4,9 @@ import { Logo } from "@/components/brand";
 import { bancoConfigurado, lerResumo, type Resumo } from "@/lib/banco";
 import { logado, senhaConfigurada } from "@/lib/sessao";
 import { mascaraWhatsApp } from "@/lib/whatsapp";
+import { planos } from "@/lib/config";
+import { formatarDinheiro } from "@/lib/pedido";
+import { listarPedidosRecentes, pedidosConfigurados, type PedidoRegistrado } from "@/lib/pedidos-servidor";
 import { sair } from "./acoes";
 import Login from "./Login";
 
@@ -74,6 +77,15 @@ export default async function Admin() {
   }
 
   let resumo: Resumo | null = null;
+  let pedidos: PedidoRegistrado[] = [];
+  let falhaPedidos = "";
+  if (pedidosConfigurados()) {
+    try {
+      pedidos = await listarPedidosRecentes();
+    } catch {
+      falhaPedidos = "Não foi possível carregar os pedidos. Recarregue para tentar novamente.";
+    }
+  }
   let falha = "";
   if (bancoConfigurado) {
     try {
@@ -118,6 +130,43 @@ export default async function Admin() {
       )}
 
       {falha && <p className="rounded-[14px] border-2 border-[#b3261e] p-4 text-sm font-bold text-[#b3261e]">{falha}</p>}
+
+      <section className="rounded-[18px] border-2 border-linha bg-white p-6">
+        <h2 className="font-display text-2xl font-extrabold">Pedidos do checkout</h2>
+        <p className="mt-2 text-sm leading-relaxed text-casca">Até 100 pedidos recentes. A assinatura só deve ser ativada após a confirmação do pagamento.</p>
+        {falhaPedidos ? <p role="alert" className="mt-4 text-sm font-bold text-faro-texto">{falhaPedidos}</p> : pedidos.length === 0 ? (
+          <p className="mt-4 text-sm text-casca">{pedidosConfigurados() ? "Nenhum pedido registrado ainda." : "Conecte o banco para receber pedidos pelo site."}</p>
+        ) : (
+          <div className="mt-5 flex flex-col gap-4">
+            {pedidos.map(({ recibo, cliente, endereco, respostas }) => (
+              <details key={recibo.id} className="rounded-[14px] border-2 border-linha p-4">
+                <summary className="cursor-pointer text-sm">
+                  <span className="font-bold">{cliente.nome} · {respostas.nomePet}</span>
+                  <span className="ml-3 text-casca">{planos[recibo.plano].nome} · {formatarDinheiro(recibo.totalCentavos)} · {dataHora(recibo.criadoEm)}</span>
+                  <span className="ml-3 inline-block rounded-full bg-petisco-suave px-3 py-1 text-xs font-bold">Aguardando pagamento</span>
+                </summary>
+                <div className="mt-4 grid gap-4 border-t border-linha pt-4 text-sm leading-relaxed sm:grid-cols-2">
+                  <div>
+                    <p className="break-all font-bold">{recibo.id}</p>
+                    <p className="mt-2 break-all">{cliente.email}</p>
+                    <a href={`https://wa.me/${cliente.whatsapp}`} target="_blank" rel="noopener noreferrer" className="font-bold text-coleira underline">{mascaraWhatsApp(cliente.whatsapp.slice(2))}</a>
+                    <p className="mt-2">Preferência: {recibo.pagamento.metodo === "pix" ? "Pix" : "Cartão"}</p>
+                    <p className="text-casca">WhatsApp: {({ enviada: "confirmação enviada", pendente: "conferir envio no provedor antes de reenviar", nao_solicitada: "tutor não solicitou envio", nao_configurada: "integração não configurada" })[recibo.notificacao]}</p>
+                  </div>
+                  <div>
+                    <p className="font-bold">Entrega</p>
+                    <p>{endereco.logradouro}, {endereco.numero}{endereco.complemento ? ` · ${endereco.complemento}` : ""}</p>
+                    <p>{endereco.bairro} · {endereco.cidade}/{endereco.uf} · CEP {endereco.cep}</p>
+                    <p className="mt-2 font-bold">Perfil: {respostas.nomePet}</p>
+                    <p className="text-casca">{respostas.especie} · {respostas.porte} · {respostas.fase} · {nomesFoco[respostas.foco]}</p>
+                    <p className="text-casca">Alimentação: {respostas.alimentacao} · atividade: {respostas.atividade} · mastigação: {respostas.mastigacao} · frequência: {respostas.frequencia}</p>
+                  </div>
+                </div>
+              </details>
+            ))}
+          </div>
+        )}
+      </section>
 
       {resumo && (
         <>

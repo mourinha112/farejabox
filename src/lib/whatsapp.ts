@@ -41,11 +41,10 @@ function resumoPet(r: Respostas): string {
 export function mensagemResultado(r: Respostas, linkApp: string): string {
   return [
     `Oi, FAREJA! Sou ${r.tutor} e acabei de montar o perfil de ${r.nomePet}.`,
-    "Quero conversar sobre o perfil e o cupom por aqui.",
+    "Quero conversar sobre o perfil e o acompanhamento por aqui.",
     "",
     resumoPet(r),
     "",
-    `Cupom: ${site.cupom.codigo}`,
     `Meu acesso ao app: ${linkApp}`,
   ].join("\n");
 }
@@ -58,7 +57,6 @@ export function mensagemPedido(r: Respostas, plano: PlanoId, linkApp: string): s
       ? `Plano: ${p.nome} — R$${p.preco}/mês.`
       : `Plano: ${p.nome} — R$${p.preco} no total a cada 3 meses (equivalente a R$${p.porMes}/mês).`,
     "Quero confirmar a seleção com a equipe FAREJA, o pagamento e eventual frete antes de concluir o pedido.",
-    `Cupom: ${site.cupom.codigo}`,
     "",
     resumoPet(r),
     "",
