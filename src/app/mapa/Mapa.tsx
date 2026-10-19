@@ -42,8 +42,8 @@ export default function Mapa() {
   if (!dados) {
     return (
       <SemCadastro
-        titulo="O Mapa sai da avaliação"
-        texto="Responda os 5 passos e o Mapa do seu pet aparece aqui, com índice de bem-estar e plano de 7 dias."
+        titulo="O Mapa começa pelo perfil do pet"
+        texto="Complete as 4 etapas para conhecer o perfil do seu pet. Depois, você pode salvar o Mapa com o plano de 7 dias."
       />
     );
   }
@@ -53,8 +53,9 @@ export default function Mapa() {
   const plano = plano7Dias(r);
   const suplemento = suplementos[d.suplemento];
   const planoPedido = dados.planoInteresse ?? "trimestral";
+  const planoEscolhido = planos[planoPedido];
   const data = new Date(dados.criadoEm).toLocaleDateString("pt-BR");
-  const linkApp = linkDeAcesso(window.location.origin, { v: 1, respostas: r });
+  const linkApp = linkDeAcesso(window.location.origin, { v: 1, respostas: r, planoInteresse: planoPedido });
 
   function marcarDia(indice: number) {
     atualizarDados((atual) => ({
@@ -82,7 +83,7 @@ export default function Mapa() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <Logo className="text-[30px]" />
-            <p className="mt-1 text-[11px] font-bold tracking-[0.24em] text-coleira">DIAGNÓSTICO DE BEM-ESTAR</p>
+            <p className="mt-1 text-[11px] font-bold tracking-[0.24em] text-coleira">PERFIL DO PET</p>
           </div>
           <p className="text-right text-xs text-casca">
             {data} · protocolo {protocolo(r, dados.criadoEm)}
@@ -217,7 +218,7 @@ export default function Mapa() {
           </h2>
           <p className="mt-2 max-w-[600px] text-sm leading-relaxed text-casca">
             O plano de 7 dias resolve a rotina. Para o reforço nutricional contínuo, montamos um box com o foco exato do
-            diagnóstico de {r.nomePet}, sem você precisar pesquisar nada.
+            perfil de {r.nomePet}, sem você precisar pesquisar nada.
           </p>
         </div>
 
@@ -247,17 +248,23 @@ export default function Mapa() {
           </div>
           <ul className="mt-3 flex flex-col gap-1.5 text-sm text-[#dff2ed]">
             <li>· 4 a 6 petiscos naturais desidratados</li>
-            <li>· Suplemento {suplemento.nome}</li>
+            <li>· Suplemento sugerido: {suplemento.nome}, a validar pela equipe FAREJA</li>
             <li>· Brinde surpresa + cartinha de {r.nomePet}</li>
             <li>· Rastreio e saúde no App</li>
           </ul>
           <p className="mt-4 flex flex-wrap items-baseline gap-2">
             <span className="font-display text-[40px] leading-none font-extrabold text-petisco">
-              R${planos.trimestral.porMes}
+              R${planoEscolhido.porMes}
             </span>
             <span className="text-sm text-menta">
-              /mês no trimestral · <s>R${planos.mensal.preco}</s>
+              /mês no plano {planoPedido}
             </span>
+          </p>
+          <p className="mt-2 text-sm text-menta">
+            {planoPedido === "trimestral"
+              ? `R$${planoEscolhido.preco} no total a cada 3 meses. `
+              : `Cobrança mensal de R$${planoEscolhido.preco}. `}
+            Eventual frete a confirmar no WhatsApp.
           </p>
           <a
             href={linkWhatsApp(mensagemPedido(r, planoPedido, linkApp))}
@@ -266,15 +273,16 @@ export default function Mapa() {
             onClick={() => avisarInteresse(r.whatsapp, planoPedido, "mapa")}
             className="nao-imprimir mt-4 flex h-[54px] items-center justify-center rounded-full bg-petisco font-display text-lg font-extrabold text-focinho hover:bg-[#ffd560]"
           >
-            Quero o box de {r.nomePet}
+            Assinar pelo WhatsApp
           </a>
-          <p className="mt-2 text-center text-xs text-menta">cancele quando quiser, sem multa</p>
+          <p className="mt-2 text-center text-xs text-menta">Envie a mensagem para confirmar seleção e pagamento com a equipe.</p>
         </div>
 
         <p className="text-[13px] leading-relaxed text-casca">
-          <strong className="text-focinho">Importante:</strong> o diagnóstico FAREJA é educativo e baseado nas suas
-          respostas. Ele não substitui consulta, exame ou tratamento veterinário. Coceira intensa, feridas, apatia ou
-          mudança brusca de comportamento pedem um profissional. Suplementos são apoio nutricional, não medicamento.
+          <strong className="text-focinho">Importante:</strong> a avaliação de preferências e necessidades da FAREJA é
+          educativa e baseada nas suas respostas. Ela não substitui consulta, exame ou tratamento veterinário. Coceira
+          intensa, feridas, apatia ou mudança brusca de comportamento pedem um profissional. Suplementos são apoio
+          nutricional, não medicamento. Quem valida o box é a curadoria FAREJA, a partir do perfil do pet.
         </p>
         <Rodape pagina={3} />
       </section>

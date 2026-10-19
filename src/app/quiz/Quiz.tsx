@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconeWhatsApp, LogoLink, Pata } from "@/components/brand";
-import { planos, site, type PlanoId } from "@/lib/config";
+import { curadoria, planos, site, type PlanoId } from "@/lib/config";
 import {
   diagnosticar,
   faseLabel,
   focoLabel,
   porteLabel,
+  pilarInfo,
   suplementos,
   type Alimentacao,
   type Atividade,
@@ -20,12 +21,30 @@ import {
   type Porte,
   type Respostas,
 } from "@/lib/diagnostico";
-import { avisarInicio, avisarInteresse } from "@/lib/funil";
-import { linkDeAcesso, novoCadastro, salvarDados } from "@/lib/storage";
+import { avisarInicio, avisarInteresse, avisarPrevia } from "@/lib/funil";
+import { atualizarCadastro, linkDeAcesso, salvarDados } from "@/lib/storage";
 import { linkWhatsApp, mascaraWhatsApp, mensagemPedido, mensagemResultado, whatsappValido } from "@/lib/whatsapp";
 
 type Rascunho = Partial<Respostas>;
-const TOTAL = 5;
+type Tela = "perguntas" | "previa" | "contato";
+const ETAPAS = 4;
+
+function montarRespostas(r: Rascunho): Respostas {
+  const especie = r.especie ?? "cachorro";
+  return {
+    especie,
+    nomePet: r.nomePet!.trim(),
+    porte: r.porte!,
+    fase: r.fase!,
+    foco: r.foco!,
+    frequencia: r.foco === "mimar" ? "as-vezes" : r.frequencia!,
+    alimentacao: r.alimentacao!,
+    atividade: r.atividade!,
+    mastigacao: r.mastigacao!,
+    tutor: r.tutor?.trim() ?? "",
+    whatsapp: r.whatsapp ?? "",
+  };
+}
 
 const focos: { id: Foco; icone: React.ReactNode }[] = [
   {
@@ -105,7 +124,7 @@ function atividades(especie: Especie): { id: Atividade; nome: string }[] {
 }
 
 function Progresso({ etapa }: { etapa: number }) {
-  const x = 4 + ((338 - 40) * etapa) / TOTAL;
+  const x = 4 + ((338 - 40) * etapa) / ETAPAS;
   return (
     <svg
       viewBox="0 0 342 26"
@@ -113,9 +132,9 @@ function Progresso({ etapa }: { etapa: number }) {
       className="h-[26px] w-full"
       role="progressbar"
       aria-valuemin={1}
-      aria-valuemax={TOTAL}
+      aria-valuemax={ETAPAS}
       aria-valuenow={etapa}
-      aria-label={`Passo ${etapa} de ${TOTAL}`}
+      aria-label={`Etapa ${etapa} de ${ETAPAS}`}
     >
       <path d="M4 16 L 338 16" stroke="#E8D9BE" strokeWidth="4" strokeLinecap="round" strokeDasharray="1 10" />
       <path d={`M4 16 L ${x} 16`} stroke="#F4622F" strokeWidth="4" strokeLinecap="round" strokeDasharray="1 10" />
@@ -175,16 +194,24 @@ function Opcoes<T extends string>({
   );
 }
 
-export default function Quiz() {
+export default function Quiz({ planoInicial }: { planoInicial?: PlanoId }) {
+  const [tela, setTela] = useState<Tela>("perguntas");
   const [etapa, setEtapa] = useState(1);
   const [r, setR] = useState<Rascunho>({ especie: "cachorro", nomePet: "", tutor: "", whatsapp: "" });
   const [erro, setErro] = useState("");
+  const [plano, setPlano] = useState<PlanoId>(planoInicial ?? "trimestral");
+  const intencaoAssinar = Boolean(planoInicial);
   const [final, setFinal] = useState<{ respostas: Respostas; plano: PlanoId } | null>(null);
   const topo = useRef<HTMLDivElement>(null);
   const iniciou = useRef(false);
+  const viuPrevia = useRef(false);
 
   const especie = r.especie ?? "cachorro";
   const nome = r.nomePet?.trim() || "seu pet";
+
+  useEffect(() => {
+    topo.current?.focus();
+  }, [etapa, tela, final]);
 
   function mudar(parte: Rascunho) {
     setR((atual) => ({ ...atual, ...parte }));
@@ -193,20 +220,47 @@ export default function Quiz() {
 
   function irPara(proxima: number) {
     setErro("");
+    setTela("perguntas");
     setEtapa(proxima);
-    topo.current?.focus();
+    window.scrollTo({ top: 0 });
+  }
+
+  function irTela(proxima: Tela) {
+    setErro("");
+    setTela(proxima);
+    if (proxima === "previa" && !viuPrevia.current) {
+      viuPrevia.current = true;
+      avisarPrevia(intencaoAssinar ? "assinatura" : "quiz");
+    }
     window.scrollTo({ top: 0 });
   }
 
   function validar(): string {
+    if (tela === "contato") {
+      if (!r.tutor?.trim()) return "Digite o seu nome.";
+      if (!whatsappValido(r.whatsapp ?? "")) return "Digite um WhatsApp válido, com DDD.";
+      return "";
+    }
     if (etapa === 1 && !r.nomePet?.trim()) return "Conta pra gente o nome do bichinho.";
     if (etapa === 2 && (!r.porte || !r.fase)) return "Escolha o porte e a fase.";
-    if (etapa === 3 && !r.foco) return "Toque na principal queixa.";
+    if (etapa === 3 && !r.foco) return "Escolha o foco do perfil.";
     if (etapa === 3 && r.foco !== "mimar" && !r.frequencia) return "Marque com que frequência isso aparece.";
     if (etapa === 4 && (!r.alimentacao || !r.atividade || !r.mastigacao)) return "Responda as três perguntas da rotina.";
-    if (etapa === 5 && !r.tutor?.trim()) return "Digite o seu nome.";
-    if (etapa === 5 && !whatsappValido(r.whatsapp ?? "")) return "Digite um WhatsApp válido, com DDD.";
     return "";
+  }
+
+  function finalizar() {
+    const respostas = montarRespostas(r);
+    salvarDados(atualizarCadastro(respostas, plano));
+    const d = diagnosticar(respostas);
+    fetch("/api/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ respostas, plano, indice: d.indice, suplemento: suplementos[d.suplemento].nome }),
+      keepalive: true,
+    }).catch(() => {});
+    setFinal({ respostas, plano });
+    window.scrollTo({ top: 0 });
   }
 
   function continuar(evento: React.FormEvent) {
@@ -216,7 +270,11 @@ export default function Quiz() {
       setErro(problema);
       return;
     }
-    if (etapa < TOTAL) {
+    if (tela === "contato") {
+      finalizar();
+      return;
+    }
+    if (etapa < ETAPAS) {
       if (!iniciou.current) {
         iniciou.current = true;
         avisarInicio();
@@ -224,38 +282,24 @@ export default function Quiz() {
       irPara(etapa + 1);
       return;
     }
-
-    const respostas: Respostas = {
-      especie,
-      nomePet: r.nomePet!.trim(),
-      porte: r.porte!,
-      fase: r.fase!,
-      foco: r.foco!,
-      frequencia: r.foco === "mimar" ? "as-vezes" : r.frequencia!,
-      alimentacao: r.alimentacao!,
-      atividade: r.atividade!,
-      mastigacao: r.mastigacao!,
-      tutor: r.tutor!.trim(),
-      whatsapp: r.whatsapp!,
-    };
-    const pedido = new URLSearchParams(window.location.search).get("plano");
-    const plano: PlanoId = pedido === "mensal" ? "mensal" : "trimestral";
-
-    salvarDados(novoCadastro(respostas, plano));
-    const d = diagnosticar(respostas);
-    // O lead só sai do aparelho se houver webhook configurado no servidor.
-    fetch("/api/lead", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ respostas, plano, indice: d.indice, suplemento: suplementos[d.suplemento].nome }),
-      keepalive: true,
-    }).catch(() => {});
-
-    setFinal({ respostas, plano });
-    window.scrollTo({ top: 0 });
+    irTela("previa");
   }
 
-  if (final) return <Resultado respostas={final.respostas} plano={final.plano} />;
+  if (final) return intencaoAssinar ? (
+    <Pedido respostas={final.respostas} plano={final.plano} onVoltar={() => { setFinal(null); irTela("previa"); }} />
+  ) : <Resultado respostas={final.respostas} plano={final.plano} />;
+  if (tela === "previa") {
+    return (
+      <Previa
+        respostas={montarRespostas(r)}
+        plano={plano}
+        intencaoAssinar={intencaoAssinar}
+        onPlano={setPlano}
+        onContinuar={() => irTela("contato")}
+        onVoltar={() => irPara(ETAPAS)}
+      />
+    );
+  }
 
   const portes = (Object.keys(porteLabel[especie]) as Porte[])
     .filter((id) => especie === "cachorro" || id !== "gigante")
@@ -268,18 +312,31 @@ export default function Quiz() {
         <div className="flex items-center justify-between">
           <LogoLink className="text-[22px]" />
           <p className="text-[11px] font-bold tracking-[0.14em] text-mel">
-            PASSO {etapa} DE {TOTAL}
+            {tela === "contato" ? "CONTATO" : `ETAPA ${etapa} DE ${ETAPAS}`}
           </p>
         </div>
-        <Progresso etapa={etapa} />
+        {tela !== "contato" && <Progresso etapa={etapa} />}
+        {intencaoAssinar && (
+          <div className="rounded-[14px] bg-coleira px-4 py-3 text-areia">
+            <p className="text-[11px] font-bold tracking-wider text-menta">SUA ASSINATURA</p>
+            <p className="mt-1 font-display text-lg font-bold">{planos[plano].nome} · {precoPlano(plano)}</p>
+            <p className="mt-1 text-xs text-[#dff2ed]">Perfil do pet → revisão do box → contato → WhatsApp</p>
+          </div>
+        )}
       </div>
 
-      <div ref={topo} tabIndex={-1} key={etapa} className="entrada flex flex-1 flex-col gap-5 px-6 pt-3 pb-6 outline-none">
-        {etapa === 1 && (
+      <div ref={topo} tabIndex={-1} key={`${tela}-${etapa}`} className="entrada flex flex-1 flex-col gap-5 px-6 pt-3 pb-6 outline-none">
+        {etapa === 1 && tela === "perguntas" && (
           <>
             <div className="flex flex-col gap-1.5">
-              <h1 className="font-display text-[30px] leading-[1.1] font-extrabold">Quem vamos mimar?</h1>
-              <p className="text-[14.5px] text-casca">Leva 2 minutinhos e o resultado sai na hora.</p>
+              <h1 className="font-display text-[30px] leading-[1.1] font-extrabold">
+                {intencaoAssinar ? "Quem vai receber o box?" : "Quem vamos mimar?"}
+              </h1>
+              <p className="text-[14.5px] text-casca">
+                {intencaoAssinar
+                  ? "Personalize seu box em 4 etapas. Depois, revise a sugestão e continue a assinatura pelo WhatsApp."
+                  : "Conte sobre seu pet em 4 etapas e veja uma prévia personalizada. Seu nome e WhatsApp ficam para depois, se quiser continuar."}
+              </p>
             </div>
             <fieldset>
               <legend className="sr-only">Espécie</legend>
@@ -358,11 +415,11 @@ export default function Quiz() {
           </>
         )}
 
-        {etapa === 2 && (
+        {etapa === 2 && tela === "perguntas" && (
           <>
             <div className="flex flex-col gap-1.5">
               <h1 className="font-display text-[28px] leading-[1.12] font-extrabold">Como é {nome}?</h1>
-              <p className="text-sm text-casca">Porte e idade definem porção, dureza e dose.</p>
+              <p className="text-sm text-casca">Porte e fase ajudam a equipe a avaliar os itens do box.</p>
             </div>
             <Opcoes
               legenda="Porte"
@@ -383,16 +440,16 @@ export default function Quiz() {
           </>
         )}
 
-        {etapa === 3 && (
+        {etapa === 3 && tela === "perguntas" && (
           <>
             <div className="flex flex-col gap-1.5">
               <h1 className="font-display text-[28px] leading-[1.12] font-extrabold">
-                O que mais incomoda {nome} hoje?
+                Qual é o foco para {nome}?
               </h1>
-              <p className="text-sm text-casca">Toque na principal. É o que o box vai atacar primeiro.</p>
+              <p className="text-sm text-casca">Escolha o que você quer levar em conta na seleção.</p>
             </div>
             <fieldset>
-              <legend className="sr-only">Principal queixa</legend>
+              <legend className="sr-only">Foco do perfil</legend>
               <div className="grid grid-cols-2 gap-3">
                 {focos.map((foco) => {
                   const ativo = r.foco === foco.id;
@@ -452,11 +509,11 @@ export default function Quiz() {
           </>
         )}
 
-        {etapa === 4 && (
+        {etapa === 4 && tela === "perguntas" && (
           <>
             <div className="flex flex-col gap-1.5">
               <h1 className="font-display text-[28px] leading-[1.12] font-extrabold">Como é a rotina de {nome}?</h1>
-              <p className="text-sm text-casca">Três toques e fechamos o mapa.</p>
+              <p className="text-sm text-casca">Três toques e fechamos o perfil.</p>
             </div>
             <Opcoes
               legenda="O que ele come no dia a dia?"
@@ -483,14 +540,18 @@ export default function Quiz() {
           </>
         )}
 
-        {etapa === 5 && (
+        {tela === "contato" && (
           <>
             <div className="flex flex-col gap-1.5">
               <h1 className="font-display text-[28px] leading-[1.12] font-extrabold">
-                Prontinho! Para quem é o resultado de {nome}?
+                {intencaoAssinar
+                  ? `Quem vai receber o box de ${nome}?`
+                  : `Quer o cupom e o acompanhamento de ${nome}?`}
               </h1>
               <p className="text-sm leading-normal text-casca">
-                O diagnóstico sai agora na tela. Pelo WhatsApp a gente acompanha {nome} com você.
+                {intencaoAssinar
+                  ? "Estes dados identificam seu pedido. Na próxima tela, você abre a conversa para combinar seleção, entrega e pagamento."
+                  : "Seu perfil já está aqui. Deixe o contato para acessar o app e conversar com a FAREJA sobre o cupom e o acompanhamento."}
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -526,7 +587,7 @@ export default function Quiz() {
                 />
               </div>
               <p id="whatsapp-ajuda" className="text-xs text-palha">
-                Só usamos para falar do resultado e do acompanhamento de {nome}. Sem spam.
+                Para falar sobre o perfil, o box e o acompanhamento de {nome}.
               </p>
             </div>
             <div className="flex items-start gap-2.5 rounded-[14px] border-2 border-[#bcdfd4] bg-menta-suave px-4 py-3.5">
@@ -534,7 +595,7 @@ export default function Quiz() {
                 <path d="M10 2 L 12 7 L 17.5 7.5 L 13.4 11 L 14.7 16.5 L 10 13.6 L 5.3 16.5 L 6.6 11 L 2.5 7.5 L 8 7 Z" fill="#0E7C7B" />
               </svg>
               <p className="text-[12.5px] leading-normal text-[#14544f]">
-                Junto com o resultado vem um <strong>cupom de primeiro box</strong>, só pra quem faz a avaliação.
+                Cupom <strong>{site.cupom.codigo}</strong>: {site.cupom.beneficio}. Consulte as condições no atendimento.
               </p>
             </div>
           </>
@@ -546,10 +607,10 @@ export default function Quiz() {
           {erro}
         </p>
         <div className="flex items-center gap-3">
-          {etapa > 1 && (
+          {(etapa > 1 || tela === "contato") && (
             <button
               type="button"
-              onClick={() => irPara(etapa - 1)}
+              onClick={() => (tela === "contato" ? irTela("previa") : irPara(etapa - 1))}
               aria-label="Voltar"
               className="flex size-[58px] shrink-0 items-center justify-center rounded-full border-2 border-linha bg-white"
             >
@@ -560,10 +621,16 @@ export default function Quiz() {
           )}
           <button
             type="submit"
-            className="flex h-[58px] flex-1 items-center justify-center gap-2.5 rounded-full bg-faro font-display text-[19px] font-extrabold text-areia hover:bg-faro-escuro"
+            className="flex min-h-[58px] flex-1 items-center justify-center gap-2.5 rounded-full bg-faro px-3 py-3 font-display text-[19px] leading-snug font-extrabold text-areia hover:bg-faro-escuro"
           >
-            {etapa === TOTAL ? `Farejar o box de ${nome}` : "Continuar"}
-            {etapa === TOTAL && (
+            {tela === "contato"
+              ? intencaoAssinar
+                ? "Preparar pedido"
+                : "Acessar meu perfil e cupom"
+              : etapa === ETAPAS
+                ? `Ver o perfil de ${nome}`
+                : "Continuar"}
+            {(tela === "contato" || etapa === ETAPAS) && (
               <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
                 <path d="M4 11 L 18 11 M12 5 L 18 11 L 12 17" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -571,7 +638,7 @@ export default function Quiz() {
           </button>
         </div>
         <p className="text-center text-[11.5px] text-palha">
-          {etapa === TOTAL ? (
+          {tela === "contato" ? (
             <>
               Ao continuar você aceita o contato pelo WhatsApp informado e a{" "}
               <Link href="/privacidade" className="underline">
@@ -580,7 +647,7 @@ export default function Quiz() {
               .
             </>
           ) : (
-            "Gratuito · sem compromisso · resultado na hora"
+            "Gratuito · sem compromisso · perfil na hora"
           )}
         </p>
       </div>
@@ -588,12 +655,178 @@ export default function Quiz() {
   );
 }
 
+function Previa({
+  respostas,
+  plano,
+  intencaoAssinar,
+  onPlano,
+  onContinuar,
+  onVoltar,
+}: {
+  respostas: Respostas;
+  plano: PlanoId;
+  intencaoAssinar: boolean;
+  onPlano: (plano: PlanoId) => void;
+  onContinuar: () => void;
+  onVoltar: () => void;
+}) {
+  const d = diagnosticar(respostas);
+  const nome = respostas.nomePet;
+  const suplemento = suplementos[d.suplemento];
+  const titulo = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { titulo.current?.focus(); }, []);
+  const textura =
+    respostas.mastigacao === "roedor"
+      ? "preferência por texturas mais firmes"
+      : respostas.mastigacao === "delicado"
+        ? "preferência por petiscos macios e fáceis de partir"
+        : "um mix de texturas para variar o estímulo";
+
+  return (
+    <div className="entrada flex min-h-dvh flex-col bg-areia">
+      <div className="flex items-center justify-between px-6 pt-[22px] pb-3.5">
+        <LogoLink className="text-[22px]" />
+        <p className="text-[11px] font-bold tracking-[0.14em] text-mel">{intencaoAssinar ? "REVISE SEU BOX" : "PRÉVIA DO PERFIL"}</p>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-4 px-6 pb-6">
+        <div className="flex flex-col gap-1.5">
+          <h1 ref={titulo} tabIndex={-1} className="font-display text-[30px] leading-[1.1] font-extrabold outline-none">
+            {intencaoAssinar ? `Seu box, pensado para ${nome}.` : `O perfil de ${nome} já está aqui.`}
+          </h1>
+          <p className="text-sm text-casca">
+            {intencaoAssinar
+              ? "Confira o perfil, a sugestão de conteúdo e o plano. Depois, continue pelo WhatsApp."
+              : "Esta prévia é sua, sem precisar deixar contato. Veja como suas respostas orientam a sugestão do box."}
+          </p>
+        </div>
+
+        <div className="rounded-[18px] border-2 border-linha bg-white p-5">
+          <p className="text-[11px] font-bold tracking-[0.18em] text-faro-texto uppercase">Perfil de {nome}</p>
+          <p className="mt-1.5 font-display text-lg leading-snug font-bold">{d.perfil}</p>
+          <p className="mt-3 text-[13px] leading-relaxed text-casca">
+            {respostas.especie === "gato" ? "Gato" : "Cachorro"} · {porteLabel[respostas.especie][respostas.porte].detalhe} · {faseLabel[respostas.fase].nome}
+          </p>
+          <p className="mt-3 text-[13px] leading-relaxed text-casca">Mastigação: {textura}.</p>
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-[18px] bg-coleira p-5 text-areia">
+          <p className="text-[11px] font-bold tracking-[0.18em] text-menta uppercase">Sugestão inicial para o box</p>
+          <ul className="flex flex-col gap-2 text-sm text-[#dff2ed]">
+            <li>4 a 6 petiscos naturais desidratados</li>
+            <li>
+              Suplemento sugerido: <strong className="text-areia">{suplemento.nome}</strong>
+            </li>
+            <li>Brinde surpresa + cartinha com o nome dele</li>
+          </ul>
+          <p className="border-t border-menta/40 pt-3 text-[13px] leading-relaxed text-[#dff2ed]">
+            <strong className="text-areia">Por que esta sugestão? </strong>
+            {respostas.foco === "mimar" || respostas.foco === "bucal"
+              ? `Entre as categorias de suplementos, ${pilarInfo[suplemento.pilar].nome.toLowerCase()} teve a menor pontuação nas regras do questionário. Essa comparação não identifica uma deficiência nutricional.`
+              : `Você escolheu ${focoLabel(respostas.foco, respostas.especie).toLowerCase()} como foco. O questionário associa esse foco à categoria ${suplemento.nome}.`}
+          </p>
+        </div>
+
+        <div className="rounded-[18px] border-2 border-linha p-4">
+          <h2 className="font-display text-lg font-bold">Quem valida a seleção?</h2>
+          <p className="mt-2 text-[13px] leading-relaxed text-casca">{curadoria.resumo}</p>
+          <details className="mt-3 text-[13px] text-casca">
+            <summary className="cursor-pointer font-bold text-coleira underline">Entenda os critérios</summary>
+            <p className="mt-2 leading-relaxed">{curadoria.detalhe}</p>
+          </details>
+        </div>
+        <EscolhaPlano plano={plano} onPlano={onPlano} />
+      </div>
+
+      <div className="sticky bottom-0 flex flex-col gap-2.5 bg-areia px-6 pt-3 pb-[26px]">
+        <button
+          type="button"
+          onClick={onContinuar}
+          className="flex min-h-[58px] items-center justify-center rounded-full bg-faro px-4 py-3 text-center font-display text-[18px] font-extrabold text-areia hover:bg-faro-escuro"
+        >
+          {intencaoAssinar ? "Continuar com este plano" : "Quero meu cupom e acesso ao app"}
+        </button>
+        <p className="text-center text-xs text-casca">
+          {intencaoAssinar ? "Próximo passo: seus dados de contato. Nenhuma cobrança agora." : "No próximo passo, pedimos seu nome e WhatsApp."}
+        </p>
+        <button type="button" onClick={onVoltar} className="text-center text-[13px] font-bold text-coleira underline">
+          Ajustar as respostas
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function precoPlano(plano: PlanoId): string {
+  return plano === "mensal" ? `R$${planos.mensal.preco}/mês` : `R$${planos.trimestral.preco} a cada 3 meses`;
+}
+
+function EscolhaPlano({ plano, onPlano }: { plano: PlanoId; onPlano: (plano: PlanoId) => void }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <Opcoes
+        legenda="Seu plano — pode trocar antes de continuar"
+        nome="plano"
+        opcoes={(["mensal", "trimestral"] as PlanoId[]).map((id) => ({
+          id,
+          nome: `${planos[id].nome} · ${precoPlano(id)}`,
+          detalhe: id === "trimestral" ? `Equivale a R$${planos[id].porMes}/mês · 3 boxes, um por mês` : "Um box por mês · cancelamento livre",
+        }))}
+        valor={plano}
+        aoEscolher={onPlano}
+      />
+      <p className="text-xs leading-relaxed text-casca">Entrega e eventual frete são confirmados no atendimento. A assinatura é concluída pelo WhatsApp.</p>
+    </div>
+  );
+}
+
+function Pedido({ respostas, plano, onVoltar }: { respostas: Respostas; plano: PlanoId; onVoltar: () => void }) {
+  const d = diagnosticar(respostas);
+  const linkApp = linkDeAcesso(window.location.origin, { v: 1, respostas, planoInteresse: plano });
+  const titulo = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { titulo.current?.focus(); }, []);
+
+  return (
+    <div className="entrada flex min-h-dvh flex-col bg-areia px-6 py-6">
+      <LogoLink className="text-[22px]" />
+      <p className="mt-8 text-xs font-bold tracking-wider text-coleira">PEDIDO PREPARADO</p>
+      <h1 ref={titulo} tabIndex={-1} className="mt-2 font-display text-[30px] leading-tight font-extrabold outline-none">Falta conversar com a FAREJA.</h1>
+      <p className="mt-3 text-sm leading-relaxed text-casca">Abra o WhatsApp e envie a mensagem com o perfil de {respostas.nomePet} e o plano escolhido. A equipe valida a seleção e combina entrega e pagamento com você.</p>
+      <div className="my-6 rounded-[18px] border-2 border-linha bg-white p-5">
+        <h2 className="font-display text-xl font-bold">{planos[plano].nome}</h2>
+        <p className="mt-2 font-display text-2xl font-extrabold text-faro-texto">{precoPlano(plano)}</p>
+        {plano === "trimestral" && <p className="mt-1 text-xs text-casca">Equivale a R${planos[plano].porMes}/mês, com um box por mês.</p>}
+        <dl className="mt-5 space-y-3 text-sm">
+          <div><dt className="font-bold">Pet</dt><dd>{respostas.nomePet} · {d.perfil}</dd></div>
+          <div><dt className="font-bold">Suplemento sugerido</dt><dd>{suplementos[d.suplemento].nome} · sujeito à validação da equipe</dd></div>
+          <div><dt className="font-bold">Seu contato</dt><dd>{respostas.tutor} · {respostas.whatsapp}</dd></div>
+        </dl>
+        <p className="mt-5 border-t border-linha pt-3 text-xs leading-relaxed text-casca">Cupom {site.cupom.codigo}: {site.cupom.beneficio}. Entrega, eventual frete e condições do cupom a confirmar no atendimento.</p>
+      </div>
+      <div className="mt-auto flex flex-col gap-3">
+        {site.whatsapp ? (
+          <a href={linkWhatsApp(mensagemPedido(respostas, plano, linkApp))} target="_blank" rel="noopener noreferrer" onClick={() => avisarInteresse(respostas.whatsapp, plano, "resultado")} className="flex min-h-[58px] items-center justify-center gap-2 rounded-full bg-coleira px-4 py-3 text-center font-display text-lg font-extrabold text-areia hover:bg-coleira-escuro">
+            <IconeWhatsApp size={22} /> Continuar no WhatsApp
+          </a>
+        ) : (
+          <p role="status" className="rounded-[14px] bg-petisco-suave p-4 text-sm text-casca">O atendimento pelo WhatsApp está indisponível no momento. Você pode revisar seu pedido ou acessar o perfil abaixo.</p>
+        )}
+        <p className="text-center text-xs leading-relaxed text-casca">A mensagem só é enviada por você no WhatsApp. Sua assinatura ainda não está confirmada e não houve cobrança.</p>
+        <button type="button" onClick={onVoltar} className="py-2 text-sm font-bold text-coleira underline">Editar plano ou respostas</button>
+        <Link href="/mapa" className="text-center text-sm font-bold text-coleira underline">Ver o perfil de {respostas.nomePet}</Link>
+      </div>
+    </div>
+  );
+}
+
 function Resultado({ respostas, plano }: { respostas: Respostas; plano: PlanoId }) {
   const d = diagnosticar(respostas);
   const nome = respostas.nomePet;
   const suplemento = suplementos[d.suplemento];
-  const linkApp = linkDeAcesso(window.location.origin, { v: 1, respostas });
+  const linkApp = linkDeAcesso(window.location.origin, { v: 1, respostas, planoInteresse: plano });
   const escolhido = planos[plano];
+  const titulo = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { titulo.current?.focus(); }, []);
 
   return (
     <div className="fundo-escuro entrada relative flex min-h-dvh flex-col overflow-hidden bg-faro text-areia">
@@ -602,7 +835,7 @@ function Resultado({ respostas, plano }: { respostas: Respostas; plano: PlanoId 
 
       <div className="relative flex flex-col gap-2 px-[26px] pt-10">
         <p className="text-xs font-bold tracking-[0.3em] text-faro-claro">FAREJAMOS!</p>
-        <h1 className="font-display text-[34px] leading-[1.08] font-extrabold">O box ideal de {nome} está pronto.</h1>
+        <h1 ref={titulo} tabIndex={-1} className="font-display text-[34px] leading-[1.08] font-extrabold outline-none">O perfil de {nome} está pronto.</h1>
         <p className="text-sm leading-normal text-faro-suave">
           Perfil: <strong>{d.perfil}</strong>
         </p>
@@ -622,7 +855,7 @@ function Resultado({ respostas, plano }: { respostas: Respostas; plano: PlanoId 
       <div className="relative mx-[26px] mt-4 flex flex-col gap-3.5 rounded-[20px] bg-areia p-[22px] text-focinho">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[11px] font-bold tracking-[0.18em] text-faro-texto uppercase">Box de {nome} · todo mês</p>
-          <p className="shrink-0 rounded-full bg-petisco px-3 py-1 text-[11px] font-bold">CUPOM ATIVO</p>
+          <p className="shrink-0 rounded-full bg-petisco px-3 py-1 text-[11px] font-bold">PRIMEIRO BOX</p>
         </div>
         <ul className="flex flex-col gap-2.5 text-sm">
           <li className="flex items-center gap-2.5">
@@ -632,7 +865,7 @@ function Resultado({ respostas, plano }: { respostas: Respostas; plano: PlanoId 
           <li className="flex items-center gap-2.5">
             <span className="size-2 shrink-0 rounded-full bg-coleira" />
             <span>
-              Suplemento de <strong>{suplemento.nome}</strong>
+              Sugestão: <strong>{suplemento.nome}</strong>
               {respostas.foco !== "mimar" && respostas.foco !== "bucal" ? " (o foco dele)" : ""}
             </span>
           </li>
@@ -657,28 +890,29 @@ function Resultado({ respostas, plano }: { respostas: Respostas; plano: PlanoId 
             )}
           </p>
         </div>
+        <p className="text-xs text-casca">{precoPlano(plano)}. Entrega e eventual frete a confirmar pelo WhatsApp.</p>
         <p className="text-xs text-casca">
           Cupom <strong className="text-focinho">{site.cupom.codigo}</strong>: {site.cupom.beneficio}.
         </p>
       </div>
 
       <div className="relative mt-6 flex flex-col gap-2.5 px-[26px] pb-7">
-        <a
+        {site.whatsapp && <a
           href={linkWhatsApp(mensagemPedido(respostas, plano, linkApp))}
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => avisarInteresse(respostas.whatsapp, plano, "resultado")}
           className="flex h-[60px] items-center justify-center rounded-full bg-petisco font-display text-xl font-extrabold text-focinho hover:bg-[#ffd560]"
         >
-          Quero o box de {nome}
-        </a>
+          Pedir o box pelo WhatsApp
+        </a>}
         <Link
           href="/mapa"
           className="flex h-[50px] items-center justify-center rounded-full border-2 border-faro-claro text-[15px] font-bold hover:bg-faro-escuro"
         >
           Ver o Mapa completo de {nome}
         </Link>
-        <a
+        {site.whatsapp && <a
           href={linkWhatsApp(mensagemResultado(respostas, linkApp))}
           target="_blank"
           rel="noopener noreferrer"
@@ -686,10 +920,11 @@ function Resultado({ respostas, plano }: { respostas: Respostas; plano: PlanoId 
         >
           <IconeWhatsApp size={20} />
           Receber o resultado no WhatsApp
-        </a>
+        </a>}
         <Link href="/app" className="text-center text-[13px] font-semibold text-faro-suave underline">
           Abrir o app do tutor
         </Link>
+        <p className="pt-2 text-center text-[12px] leading-relaxed text-faro-suave">{curadoria.resumo}</p>
       </div>
     </div>
   );

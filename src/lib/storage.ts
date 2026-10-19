@@ -6,6 +6,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import type { PlanoId } from "./config";
 import type { Pilares, Respostas } from "./diagnostico";
+import { whatsappValido } from "./whatsapp";
 
 export type StatusCaixa = "preparando" | "postado" | "transito" | "entregue";
 
@@ -30,7 +31,7 @@ export type Dados = {
   plano7: boolean[];
 };
 
-export type Acesso = { v: 1; respostas: Respostas; assinatura?: Assinatura };
+export type Acesso = { v: 1; respostas: Respostas; planoInteresse?: PlanoId; assinatura?: Assinatura };
 
 const CHAVE = "fareja:v1";
 const EVENTO = "fareja:dados";
@@ -51,6 +52,8 @@ function interpretar(bruto: string | null): Dados | null {
     if (!dados?.respostas?.nomePet) return null;
     return {
       ...dados,
+      planoInteresse:
+        dados.planoInteresse === "mensal" || dados.planoInteresse === "trimestral" ? dados.planoInteresse : undefined,
       checkins: dados.checkins ?? [],
       doses: dados.doses ?? [],
       plano7: dados.plano7 ?? Array(7).fill(false),
@@ -115,6 +118,21 @@ export function novoCadastro(respostas: Respostas, planoInteresse?: PlanoId): Da
   };
 }
 
+// Refazer o perfil do mesmo pet conserva assinatura e acompanhamento neste aparelho.
+// Quem chama decide quando gravar os dados retornados.
+export function atualizarCadastro(respostas: Respostas, planoInteresse?: PlanoId): Dados {
+  const atual = lerDados();
+  const mesmoPet =
+    atual &&
+    atual.respostas.especie === respostas.especie &&
+    atual.respostas.nomePet.trim().toLowerCase() === respostas.nomePet.trim().toLowerCase() &&
+    whatsappValido(respostas.whatsapp) &&
+    atual.respostas.whatsapp.replace(/\D/g, "") === respostas.whatsapp.replace(/\D/g, "");
+
+  if (!atual || !mesmoPet) return novoCadastro(respostas, planoInteresse);
+  return { ...atual, respostas, planoInteresse: planoInteresse ?? atual.planoInteresse };
+}
+
 function paraBase64Url(texto: string): string {
   const bytes = new TextEncoder().encode(texto);
   let binario = "";
@@ -137,7 +155,11 @@ export function decodificarAcesso(codigo: string): Acesso | null {
   try {
     const acesso = JSON.parse(deBase64Url(codigo)) as Acesso;
     if (acesso?.v !== 1 || !acesso.respostas?.nomePet || !acesso.respostas?.especie) return null;
-    return acesso;
+    return {
+      ...acesso,
+      planoInteresse:
+        acesso.planoInteresse === "mensal" || acesso.planoInteresse === "trimestral" ? acesso.planoInteresse : undefined,
+    };
   } catch {
     return null;
   }
@@ -149,13 +171,7 @@ export function linkDeAcesso(origem: string, acesso: Acesso): string {
 
 // Entra com o link: mantém o histórico do aparelho quando é o mesmo pet do mesmo tutor.
 export function importarAcesso(acesso: Acesso): void {
-  const atual = lerDados();
-  const mesmoPet =
-    atual &&
-    atual.respostas.nomePet.toLowerCase() === acesso.respostas.nomePet.toLowerCase() &&
-    atual.respostas.whatsapp.replace(/\D/g, "") === acesso.respostas.whatsapp.replace(/\D/g, "");
-
-  const base = mesmoPet && atual ? atual : novoCadastro(acesso.respostas);
+  const base = atualizarCadastro(acesso.respostas, acesso.planoInteresse);
   salvarDados({
     ...base,
     respostas: acesso.respostas,

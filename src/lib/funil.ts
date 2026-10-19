@@ -15,6 +15,10 @@ export function avisarInicio(): void {
   enviar({ tipo: "inicio" });
 }
 
+export function avisarPrevia(origem: "quiz" | "assinatura"): void {
+  enviar({ tipo: "previa", origem });
+}
+
 export function avisarInteresse(whatsapp: string, plano: PlanoId, origem: "resultado" | "mapa" | "app"): void {
   enviar({ tipo: "interesse", whatsapp, plano, origem });
 }

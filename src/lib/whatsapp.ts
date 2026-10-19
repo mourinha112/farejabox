@@ -34,14 +34,14 @@ function resumoPet(r: Respostas): string {
     `Pet: ${r.nomePet} (${r.especie}, ${porteLabel[r.especie][r.porte].nome.toLowerCase()}, ${faseLabel[r.fase].nome.toLowerCase()})`,
     `Índice de bem-estar: ${d.indice}/100 (${d.leitura})`,
     pilares,
-    `Suplemento indicado: ${suplementos[d.suplemento].nome}`,
+    `Suplemento sugerido pelo perfil: ${suplementos[d.suplemento].nome} (seleção a validar pela equipe FAREJA)`,
   ].join("\n");
 }
 
 export function mensagemResultado(r: Respostas, linkApp: string): string {
   return [
-    `Oi, FAREJA! Sou ${r.tutor} e acabei de fazer a avaliação de ${r.nomePet}.`,
-    "Quero receber o resultado completo por aqui.",
+    `Oi, FAREJA! Sou ${r.tutor} e acabei de montar o perfil de ${r.nomePet}.`,
+    "Quero conversar sobre o perfil e o cupom por aqui.",
     "",
     resumoPet(r),
     "",
@@ -53,8 +53,11 @@ export function mensagemResultado(r: Respostas, linkApp: string): string {
 export function mensagemPedido(r: Respostas, plano: PlanoId, linkApp: string): string {
   const p = planos[plano];
   return [
-    `Oi, FAREJA! Sou ${r.tutor} e quero o box de ${r.nomePet}.`,
-    `Plano: ${p.nome} (R$${p.preco}${plano === "mensal" ? "/mês" : " a cada 3 meses"})`,
+    `Oi, FAREJA! Sou ${r.tutor} e quero concluir a assinatura do box de ${r.nomePet}.`,
+    plano === "mensal"
+      ? `Plano: ${p.nome} — R$${p.preco}/mês.`
+      : `Plano: ${p.nome} — R$${p.preco} no total a cada 3 meses (equivalente a R$${p.porMes}/mês).`,
+    "Quero confirmar a seleção com a equipe FAREJA, o pagamento e eventual frete antes de concluir o pedido.",
     `Cupom: ${site.cupom.codigo}`,
     "",
     resumoPet(r),

@@ -173,13 +173,13 @@ function CartaoCaixa({ dados }: { dados: Dados }) {
   const [copiado, setCopiado] = useState(false);
 
   if (!assinatura) {
-    const linkApp = linkDeAcesso(window.location.origin, { v: 1, respostas: r });
+    const linkApp = linkDeAcesso(window.location.origin, { v: 1, respostas: r, planoInteresse: dados.planoInteresse });
     return (
       <section className="fundo-escuro flex flex-col gap-2.5 rounded-[18px] bg-faro px-5 py-[18px] text-areia">
         <Rotulo className="text-faro-claro">Box de {r.nomePet}</Rotulo>
         <p className="font-display text-2xl leading-tight font-extrabold">Ainda sem box ativo</p>
         <p className="text-[13px] leading-normal text-faro-suave">
-          O diagnóstico já indicou o que entra na caixa. Assine e acompanhe a entrega por aqui.
+          O perfil do pet já indicou o que entra na caixa. Assine e acompanhe a entrega por aqui.
         </p>
         <a
           href={linkWhatsApp(mensagemPedido(r, dados.planoInteresse ?? "trimestral", linkApp))}
@@ -627,7 +627,7 @@ function Perfil({ dados }: { dados: Dados }) {
   const [confirmando, setConfirmando] = useState(false);
 
   async function copiarLink() {
-    const link = linkDeAcesso(window.location.origin, { v: 1, respostas: r, assinatura: dados.assinatura });
+    const link = linkDeAcesso(window.location.origin, { v: 1, respostas: r, assinatura: dados.assinatura, planoInteresse: dados.planoInteresse });
     try {
       await navigator.clipboard.writeText(link);
       setCopiado(true);

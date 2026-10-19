@@ -1,4 +1,4 @@
-// Motor do diagnóstico: das respostas do quiz sai o índice de bem-estar,
+// Motor do perfil: das respostas do quiz sai o índice de bem-estar,
 // os pilares, o suplemento do box e o plano gratuito de 7 dias.
 
 export type Especie = "cachorro" | "gato";

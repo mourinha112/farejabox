@@ -17,12 +17,12 @@ export default function Privacidade() {
       </p>
       <h2>Para que usamos</h2>
       <p>
-        Para gerar o diagnóstico, montar o box, falar com você pelo WhatsApp sobre o resultado e o acompanhamento, e
+        Para montar o perfil do pet, escolher o box, falar com você pelo WhatsApp sobre o resultado e o acompanhamento, e
         entregar a sua assinatura. Não vendemos seus dados.
       </p>
       <h2>Onde ficam</h2>
       <p>
-        O diagnóstico, os check-ins e o histórico do app ficam salvos no seu próprio aparelho. O seu link de acesso
+        O perfil do pet, os check-ins e o histórico do app ficam salvos no seu próprio aparelho. O seu link de acesso
         carrega os dados do perfil dentro do próprio endereço: trate ele como pessoal e não compartilhe.
       </p>
       <h2>Seus direitos</h2>

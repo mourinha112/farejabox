@@ -1,6 +1,6 @@
-// Eventos do funil: início do quiz e interesse no box (clique em "Quero o box").
+// Eventos do funil: início, prévia sem contato e interesse no box.
 
-import { bancoConfigurado, registrarInicio, registrarInteresse } from "@/lib/banco";
+import { bancoConfigurado, registrarInicio, registrarInteresse, registrarPrevia } from "@/lib/banco";
 
 const origens = ["resultado", "mapa", "app"];
 
@@ -11,11 +11,19 @@ export async function POST(request: Request) {
   } catch {
     return Response.json({ ok: false }, { status: 400 });
   }
+  if (!corpo || typeof corpo !== "object") return Response.json({ ok: false }, { status: 400 });
+  if (corpo.tipo === "previa" && corpo.origem !== "quiz" && corpo.origem !== "assinatura") {
+    return Response.json({ ok: false }, { status: 400 });
+  }
   if (!bancoConfigurado) return Response.json({ ok: true, salvo: false });
 
   try {
     if (corpo.tipo === "inicio") {
       await registrarInicio();
+      return Response.json({ ok: true, salvo: true });
+    }
+    if (corpo.tipo === "previa" && (corpo.origem === "quiz" || corpo.origem === "assinatura")) {
+      await registrarPrevia(corpo.origem);
       return Response.json({ ok: true, salvo: true });
     }
     if (corpo.tipo === "interesse") {

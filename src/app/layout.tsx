@@ -22,11 +22,11 @@ export const metadata: Metadata = {
     template: "%s · FAREJA",
   },
   description:
-    "Assinatura mensal de petiscos naturais e suplemento funcional, montada pelo diagnóstico do seu pet. Faça a avaliação gratuita em 2 minutos.",
+    "Assinatura mensal de petiscos naturais e suplemento funcional, montada pelo perfil do seu pet. Faça a avaliação de preferências em 2 minutos.",
   openGraph: {
     title: "FAREJA · O box que seu pet fareja de longe",
     description:
-      "Petiscos naturais + suplemento funcional, montados pelo diagnóstico do seu pet e entregues todo mês.",
+      "Petiscos naturais + suplemento funcional, montados pelo perfil do seu pet e entregues todo mês.",
     locale: "pt_BR",
     type: "website",
     siteName: "FAREJA",

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { GatoFareja, Logo, LogoLink, Pata, Trilha } from "@/components/brand";
-import { depoimentos, faq, planos, site } from "@/lib/config";
+import { curadoria, depoimentos, faq, planos, site } from "@/lib/config";
 import { suplementos } from "@/lib/diagnostico";
 import { linkWhatsApp } from "@/lib/whatsapp";
 
@@ -17,30 +17,30 @@ const passos = [
     numero: "1",
     cor: "bg-coleira text-areia",
     titulo: "Conte sobre o seu pet",
-    texto: "Porte, idade, pelagem, comportamento e queixas. A avaliação é gratuita e leva 2 minutos.",
+    texto: "São 4 etapas sobre preferências, rotina e necessidades. Você vê a prévia sem informar seu nome ou WhatsApp.",
   },
   {
     numero: "2",
     cor: "bg-faro text-areia",
-    titulo: "Montamos o box dele",
-    texto: "Petiscos naturais + o suplemento funcional certo: articulação, ansiedade, pelagem ou digestão.",
+    titulo: "Veja a seleção sugerida",
+    texto: "Conheça o perfil do pet, o suplemento sugerido e o motivo da escolha. Depois, decida se quer assinar.",
   },
   {
     numero: "3",
     cor: "bg-petisco text-focinho",
     titulo: "Chega todo mês",
-    texto: "Caixa surpresa na porta, rastreio no WhatsApp e a saúde do pet acompanhada no App.",
+    texto: "Confirme seu plano, entrega e pagamento pelo WhatsApp. A assinatura leva petiscos e suplemento à sua porta.",
   },
 ];
 
 const dentroDaCaixa = [
   { titulo: "Petiscos naturais desidratados", texto: "De 4 a 6 por caixa, sem conservantes e sem corantes." },
-  { titulo: "Suplemento funcional do mês", texto: "Escolhido pelo diagnóstico do seu pet." },
+  { titulo: "Suplemento funcional do mês", texto: "Escolhido pelo perfil do seu pet." },
   { titulo: "Brinde surpresa", texto: "Porque farejar tem que valer a pena." },
   { titulo: "Cartinha do mês", texto: "Com o nome dele e a dica para usar o suplemento." },
 ];
 
-const selos = ["100% natural, sem conservantes", "Montado por diagnóstico", "Cancele quando quiser", "Acompanhamento no App"];
+const selos = ["100% natural, sem conservantes", "Montado pelo perfil do pet", "Cancele quando quiser", "Acompanhamento no App"];
 
 function Etiqueta({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <p className={`text-xs font-bold uppercase tracking-[0.26em] ${className}`}>{children}</p>;
@@ -73,10 +73,10 @@ export default function Home() {
               Entrar
             </Link>
             <Link
-              href="/quiz"
+              href="#planos"
               className="flex h-11 items-center rounded-full bg-faro px-4 font-display text-[15px] font-bold whitespace-nowrap text-areia hover:bg-faro-escuro sm:h-12 sm:px-6 sm:text-[17px]"
             >
-              Montar meu box
+              Ver planos
             </Link>
           </div>
         </div>
@@ -103,18 +103,21 @@ export default function Home() {
                 O box que seu pet fareja de longe.
               </h1>
               <p className="max-w-[480px] text-lg leading-relaxed text-faro-suave">
-                Petiscos naturais + suplemento funcional, montados pelo diagnóstico do seu pet e entregues todo mês na
-                sua porta.
+                Petiscos naturais + suplemento funcional, montados pelo perfil do seu pet e entregues todo mês na sua
+                porta.
               </p>
               <div className="mt-1.5 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-[18px]">
                 <Link
                   href="/quiz"
                   className="flex h-[58px] items-center rounded-full bg-petisco px-8 font-display text-xl font-extrabold text-focinho hover:bg-[#ffd560]"
                 >
-                  Fazer a avaliação gratuita
+                  Conhecer o perfil do meu pet
                 </Link>
-                <p className="text-[13.5px] font-semibold text-faro-suave">2 minutos · resultado na hora</p>
               </div>
+              <p className="text-[13.5px] font-semibold text-faro-suave">Gratuito · 4 etapas · prévia antes do contato</p>
+              <a href="#planos" className="w-fit font-bold text-areia underline underline-offset-4 hover:text-petisco">
+                Já quero assinar → escolher plano
+              </a>
               <Trilha className="mt-2 hidden h-[52px] w-[380px] lg:block" />
             </div>
             <div className="flex items-center justify-center lg:flex-[0.85]">
@@ -164,11 +167,11 @@ export default function Home() {
             <div className="flex flex-col gap-4">
               <Etiqueta className="text-menta">Dentro desta caixa</Etiqueta>
               <h2 className="font-display text-[32px] leading-tight font-extrabold sm:text-[38px]">
-                O conteúdo é surpresa. A curadoria, não.
+                O conteúdo é surpresa. Os critérios, não.
               </h2>
               <p className="max-w-[480px] text-base leading-relaxed text-[#cfeae4]">
-                Todo mês o box muda, mas sempre pelo mesmo critério: o diagnóstico do seu pet. O que você marca no App
-                ajusta a próxima caixa.
+                Todo mês o box muda, mas sempre pelo mesmo critério: o perfil do seu pet. O que você marca no App ajusta
+                a próxima caixa.
               </p>
               <ul className="mt-2 flex flex-col gap-3.5">
                 {dentroDaCaixa.map((item) => (
@@ -188,7 +191,7 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <Etiqueta className="text-menta">O suplemento certo para cada queixa</Etiqueta>
+              <Etiqueta className="text-menta">Categorias sugeridas pelo perfil</Etiqueta>
               <ul className="grid gap-3.5 sm:grid-cols-2">
                 {Object.values(suplementos).map((s) => (
                   <li key={s.nome} className="flex flex-col gap-1.5 rounded-2xl bg-areia p-5 text-focinho">
@@ -197,10 +200,7 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <p className="text-[13px] leading-relaxed text-[#cfeae4]">
-                Suplemento é apoio nutricional, não medicamento. O diagnóstico FAREJA é educativo e não substitui a
-                consulta com o veterinário.
-              </p>
+              <p className="text-[13px] leading-relaxed text-[#cfeae4]">{curadoria.detalhe}</p>
             </div>
           </div>
         </section>
@@ -211,6 +211,9 @@ export default function Home() {
             <h2 className="font-display text-[32px] leading-tight font-extrabold sm:text-[38px]">
               Escolha como ele vai farejar
             </h2>
+            <p className="max-w-[620px] text-[15px] leading-relaxed text-casca">
+              Escolha seu plano, personalize o box e confirme o pedido pelo WhatsApp. Sem cobrança nesta etapa.
+            </p>
           </div>
           <div className="grid items-stretch gap-6 lg:grid-cols-3">
             <article className="fundo-escuro flex flex-col gap-3.5 rounded-[22px] bg-coleira p-[34px] text-areia">
@@ -225,11 +228,14 @@ export default function Home() {
                 ))}
               </ul>
               <Link
-                href="/quiz?plano=mensal"
+                href="/assinar?plano=mensal"
                 className="mt-auto flex h-[52px] items-center justify-center rounded-full bg-areia font-display text-[17px] font-extrabold text-coleira hover:bg-white"
               >
                 Assinar mensal
               </Link>
+              <p className="text-center text-[12.5px] leading-snug text-[#cfeae4]">
+                4 etapas para personalizar o box. Finalização pelo WhatsApp.
+              </p>
             </article>
 
             <article className="relative flex flex-col gap-3.5 rounded-[22px] bg-petisco p-[34px] text-focinho">
@@ -247,11 +253,14 @@ export default function Home() {
                 ))}
               </ul>
               <Link
-                href="/quiz?plano=trimestral"
+                href="/assinar?plano=trimestral"
                 className="mt-auto flex h-[52px] items-center justify-center rounded-full bg-focinho font-display text-[17px] font-extrabold text-petisco hover:bg-black"
               >
                 Assinar trimestral
               </Link>
+              <p className="text-center text-[12.5px] leading-snug text-[#5c4a1e]">
+                4 etapas para personalizar o box. Finalização pelo WhatsApp.
+              </p>
             </article>
 
             {depoimentos.length > 0 ? (
@@ -274,12 +283,12 @@ export default function Home() {
               <article className="flex flex-col gap-4 rounded-[22px] border-2 border-linha bg-white p-[34px]">
                 <Etiqueta className="text-faro-texto">Sem pegadinha</Etiqueta>
                 <h3 className="font-display text-[24px] leading-tight font-extrabold">
-                  Primeiro o diagnóstico, depois o box.
+                  Primeiro o perfil do pet, depois o box.
                 </h3>
                 <ul className="flex flex-col gap-2.5 text-[14.5px] leading-normal text-casca">
-                  <li>A avaliação é gratuita e o resultado é seu, assinando ou não.</li>
+                  <li>A prévia é gratuita e aparece antes de pedir seu contato.</li>
                   <li>Você leva um plano de 7 dias para começar hoje, sem comprar nada.</li>
-                  <li>Cancele quando quiser, sem multa.</li>
+                  <li>No plano mensal, cancele quando quiser, sem multa.</li>
                 </ul>
                 <Link
                   href="/quiz"
@@ -387,8 +396,8 @@ export default function Home() {
                 Gato também fareja. E como.
               </h2>
               <p className="max-w-[620px] text-base leading-relaxed text-[#5c4a1e]">
-                Na avaliação você escolhe gato e o diagnóstico muda junto: porções menores, texturas que felino aceita e
-                o suplemento escolhido pela queixa dele, da pelagem ao estresse.
+                Na avaliação você escolhe gato e o perfil muda junto: porções menores, texturas que felino aceita e o
+                suplemento escolhido pela queixa dele, da pelagem ao estresse.
               </p>
               <Link
                 href="/quiz"
@@ -437,14 +446,14 @@ export default function Home() {
           <Pata size={70} className="absolute right-[8%] bottom-10 rotate-[14deg] text-areia opacity-[0.14]" />
           <div className="relative mx-auto flex max-w-[640px] flex-col items-center gap-5">
             <h2 className="font-display text-[34px] leading-tight font-extrabold text-areia sm:text-[44px]">
-              Bora descobrir o que o seu pet precisa?
+              Bora conhecer o perfil do seu pet?
             </h2>
-            <p className="text-lg text-faro-suave">Avaliação gratuita, resultado na hora e cupom de primeiro box.</p>
+            <p className="text-lg text-faro-suave">4 etapas, uma prévia personalizada e nenhum contato exigido para vê-la.</p>
             <Link
               href="/quiz"
               className="flex h-[58px] items-center rounded-full bg-petisco px-9 font-display text-xl font-extrabold text-focinho hover:bg-[#ffd560]"
             >
-              Fazer a avaliação gratuita
+              Ver o perfil do meu pet
             </Link>
           </div>
         </section>

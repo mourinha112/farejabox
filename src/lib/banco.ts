@@ -8,7 +8,7 @@ const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TO
 
 export const bancoConfigurado = Boolean(url && token);
 
-export type Evento = "inicio" | "concluido" | "interesse";
+export type Evento = "inicio" | "previa" | "concluido" | "interesse";
 
 export type Lead = {
   whatsapp: string;
@@ -27,9 +27,11 @@ export type Lead = {
 
 export type Resumo = {
   inicios: number;
+  previas: number;
+  previasPorOrigem: { quiz: number; assinatura: number };
   leads: number;
   interessados: number;
-  dias: { dia: string; inicio: number; concluido: number; interesse: number }[];
+  dias: { dia: string; inicio: number; previa: number; concluido: number; interesse: number }[];
   ultimos: Lead[];
 };
 
@@ -69,6 +71,10 @@ export async function registrarInicio(): Promise<void> {
   await pipeline(contar("inicio"));
 }
 
+export async function registrarPrevia(origem: "quiz" | "assinatura"): Promise<void> {
+  await pipeline([...contar("previa"), ["INCR", `total:previa:${origem}`]]);
+}
+
 export async function registrarLead(lead: Lead): Promise<void> {
   await pipeline([
     ...contar("concluido"),
@@ -95,10 +101,13 @@ export async function registrarInteresse(whatsapp: string, plano: string, origem
 
 export async function lerResumo(): Promise<Resumo> {
   const dias = Array.from({ length: 14 }, (_, i) => diaEmBrasilia(new Date(Date.now() - i * 86_400_000)));
-  const eventos: Evento[] = ["inicio", "concluido", "interesse"];
+  const eventos: Evento[] = ["inicio", "previa", "concluido", "interesse"];
 
-  const [inicios, leads, interessados, membros, ...porDia] = await pipeline([
+  const [inicios, previas, previasQuiz, previasAssinatura, leads, interessados, membros, ...porDia] = await pipeline([
     ["GET", "total:inicio"],
+    ["GET", "total:previa"],
+    ["GET", "total:previa:quiz"],
+    ["GET", "total:previa:assinatura"],
     ["ZCARD", "leads"],
     ["SCARD", "interessados"],
     ["ZRANGE", "leads", 0, 199, "REV"],
@@ -113,13 +122,16 @@ export async function lerResumo(): Promise<Resumo> {
 
   return {
     inicios: Number(inicios ?? 0),
+    previas: Number(previas ?? 0),
+    previasPorOrigem: { quiz: Number(previasQuiz ?? 0), assinatura: Number(previasAssinatura ?? 0) },
     leads: Number(leads ?? 0),
     interessados: Number(interessados ?? 0),
     dias: dias.map((dia, i) => ({
       dia,
-      inicio: Number(porDia[i * 3] ?? 0),
-      concluido: Number(porDia[i * 3 + 1] ?? 0),
-      interesse: Number(porDia[i * 3 + 2] ?? 0),
+      inicio: Number(porDia[i * eventos.length] ?? 0),
+      previa: Number(porDia[i * eventos.length + 1] ?? 0),
+      concluido: Number(porDia[i * eventos.length + 2] ?? 0),
+      interesse: Number(porDia[i * eventos.length + 3] ?? 0),
     })),
     ultimos,
   };

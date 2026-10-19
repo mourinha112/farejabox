@@ -2,7 +2,18 @@ import Link from "next/link";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
-    <span className={`font-display font-extrabold leading-none tracking-tight text-faro ${className}`}>FAREJA</span>
+    <svg
+      viewBox="217 1229 2566 655"
+      width="3.2em"
+      height="1em"
+      role="img"
+      aria-label="FAREJA"
+      focusable="false"
+      className={`inline-block shrink-0 align-middle leading-none ${className}`}
+    >
+      {/* Enquadra a marca sem modificar o arquivo original ou suas cores. */}
+      <image href="/fareja-logo.png" width="3000" height="3000" />
+    </svg>
   );
 }
 

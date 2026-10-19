@@ -36,10 +36,6 @@ function Moldura({ children }: { children: React.ReactNode }) {
   );
 }
 
-function taxa(parte: number, total: number): string {
-  return total > 0 ? `${Math.round((parte / total) * 100)}%` : "–";
-}
-
 function dataHora(iso: string): string {
   return new Date(iso).toLocaleString("pt-BR", {
     timeZone: "America/Sao_Paulo",
@@ -93,7 +89,7 @@ export default async function Admin() {
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <Logo className="text-[30px]" />
-          <h1 className="font-display text-[26px] leading-tight font-extrabold">Funil do quiz</h1>
+          <h1 className="font-display text-[26px] leading-tight font-extrabold">Funil do perfil do pet</h1>
         </div>
         <div className="flex items-center gap-3">
           <Link
@@ -125,24 +121,31 @@ export default async function Admin() {
 
       {resumo && (
         <>
-          <section aria-label="Totais" className="grid gap-4 sm:grid-cols-3">
+          <section aria-label="Totais" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-[18px] border-2 border-linha bg-white p-6">
-              <p className="text-[11px] font-bold tracking-[0.2em] text-mel">COMEÇARAM O QUIZ</p>
+              <p className="text-[11px] font-bold tracking-[0.2em] text-mel">INÍCIOS REGISTRADOS</p>
               <p className="mt-1 font-display text-[48px] leading-none font-extrabold">{resumo.inicios}</p>
-              <p className="mt-2 text-[13px] text-casca">passaram do primeiro passo</p>
+              <p className="mt-2 text-[13px] text-casca">eventos de avanço do primeiro passo</p>
+            </div>
+            <div className="rounded-[18px] border-2 border-linha bg-white p-6">
+              <p className="text-[11px] font-bold tracking-[0.2em] text-mel">PRÉVIAS EXIBIDAS</p>
+              <p className="mt-1 font-display text-[48px] leading-none font-extrabold">{resumo.previas}</p>
+              <p className="mt-2 text-[13px] text-casca">
+                eventos sem dados de contato · {resumo.previasPorOrigem.quiz} pelo quiz · {resumo.previasPorOrigem.assinatura} pela assinatura
+              </p>
             </div>
             <div className="fundo-escuro rounded-[18px] bg-coleira p-6 text-areia">
-              <p className="text-[11px] font-bold tracking-[0.2em] text-menta">FIZERAM O QUIZ</p>
+              <p className="text-[11px] font-bold tracking-[0.2em] text-menta">CONTATOS RECEBIDOS</p>
               <p className="mt-1 font-display text-[48px] leading-none font-extrabold">{resumo.leads}</p>
               <p className="mt-2 text-[13px] text-menta">
-                {taxa(resumo.leads, resumo.inicios)} de quem começou · contatos únicos
+                contatos únicos por WhatsApp
               </p>
             </div>
             <div className="fundo-escuro rounded-[18px] bg-faro p-6 text-areia">
               <p className="text-[11px] font-bold tracking-[0.2em] text-faro-claro">QUISERAM O BOX</p>
               <p className="mt-1 font-display text-[48px] leading-none font-extrabold">{resumo.interessados}</p>
               <p className="mt-2 text-[13px] text-faro-suave">
-                {taxa(resumo.interessados, resumo.leads)} de quem concluiu · clicaram em “Quero o box”
+                contatos únicos que clicaram para continuar com o box
               </p>
             </div>
           </section>
@@ -150,13 +153,14 @@ export default async function Admin() {
           <section className="rounded-[18px] border-2 border-linha bg-white p-6">
             <h2 className="text-[11px] font-bold tracking-[0.2em] text-mel">ÚLTIMOS 14 DIAS</h2>
             <div className="mt-3 overflow-x-auto">
-              <table className="w-full min-w-[420px] text-left text-sm">
+              <table className="w-full min-w-[520px] text-left text-sm">
                 <thead className="text-[12px] text-casca">
                   <tr>
                     <th className="py-2 font-bold">Dia</th>
-                    <th className="py-2 text-right font-bold">Começaram</th>
-                    <th className="py-2 text-right font-bold">Concluíram</th>
-                    <th className="py-2 text-right font-bold">Quiseram o box</th>
+                    <th className="py-2 text-right font-bold">Inícios</th>
+                    <th className="py-2 text-right font-bold">Prévias</th>
+                    <th className="py-2 text-right font-bold">Contatos enviados</th>
+                    <th className="py-2 text-right font-bold">Cliques no box</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -164,6 +168,7 @@ export default async function Admin() {
                     <tr key={dia.dia} className="border-t border-linha">
                       <td className="py-2 font-semibold">{diaCurto(dia.dia)}</td>
                       <td className="py-2 text-right tabular-nums">{dia.inicio}</td>
+                      <td className="py-2 text-right tabular-nums">{dia.previa}</td>
                       <td className="py-2 text-right tabular-nums">{dia.concluido}</td>
                       <td className="py-2 text-right font-bold tabular-nums">{dia.interesse}</td>
                     </tr>
@@ -172,7 +177,9 @@ export default async function Admin() {
               </table>
             </div>
             <p className="mt-3 text-xs text-casca">
-              Por dia conta cada envio e cada clique; os totais do topo contam contatos únicos.
+              A tabela conta eventos, que podem se repetir. Nos totais, apenas contatos e interessados são únicos por WhatsApp.
+              As prévias começaram a ser contadas com o novo fluxo; contatos anteriores continuam no histórico.
+              Sem vincular a prévia anônima ao contato, esses números não representam uma taxa de conversão.
             </p>
           </section>
 
