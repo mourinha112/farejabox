@@ -1,5 +1,5 @@
 // Tudo que muda sem mexer em tela fica aqui.
-// O número do WhatsApp vem de NEXT_PUBLIC_WHATSAPP_NUMBER (só dígitos, com DDI: 5521999999999).
+// NEXT_PUBLIC_WHATSAPP_NUMBER pode substituir o WhatsApp comercial padrão (com DDI).
 
 // Aceita variável vazia, sem protocolo ou inválida sem derrubar o build.
 function urlDoSite(): string {
@@ -19,7 +19,7 @@ export const site = {
   slogan: "farejou, achou, amou.",
   dominio: "farejabox.com.br",
   url: urlDoSite(),
-  whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, ""),
+  whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, "") || "5521986131173",
   instagram: "farejabox",
   freteGratisAcima: 149,
   cupom: {

@@ -18,7 +18,7 @@ Site, perfil do pet, app do tutor e painel do funil. Next.js 16 (App Router) + T
 
 | Variável | Obrigatória | Para quê |
 | --- | --- | --- |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Sim | WhatsApp da FAREJA, só dígitos com DDI. Ex.: `5521999999999` |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Não | Substitui o WhatsApp comercial padrão da FAREJA (`5521986131173`), só dígitos com DDI |
 | `ADMIN_PASSWORD` | Sim | Senha do `/admin`, mínimo 8 caracteres |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Sim, para o funil | Preenchidas pela Vercel ao conectar um Upstash Redis em **Storage** |
 | `NEXT_PUBLIC_SITE_URL` | Não | Endereço público do site |
